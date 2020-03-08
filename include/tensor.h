@@ -12,6 +12,7 @@
 #include <cassert>
 #include <algorithm>
 #include <cstring>
+#include "utils/random.h"
 
 namespace lr {
     using Shape = std::vector<int>;
@@ -57,6 +58,19 @@ namespace lr {
                 _data[i] = 1;
             }
         }
+
+        inline void uniform(double low = 0, double high = 1){ // 均值分布
+            for(int i = 0; i < getSize(); ++i){
+                _data[i] = lr::uniform(low, high);
+            }
+        }
+
+        inline void gussian(double mean = 0, double var = 1){
+            for(int i = 0; i < getSize(); ++i){
+                _data[i] = lr::gussian(mean, var);
+            }
+        }
+
         inline void zeros(){
             memset(reinterpret_cast<void*>(_data), 0, sizeof(double) * getSize());
         }
