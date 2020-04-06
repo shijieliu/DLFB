@@ -18,11 +18,6 @@ namespace lr {
     using Shape = std::vector<int>;
 
     class Tensor {
-        Shape _shape;
-        double *_data;
-        enum Operator {
-            Add, Sub, Mul
-        };
     public:
         explicit Tensor(const Shape &shape);
 
@@ -103,19 +98,26 @@ namespace lr {
         }
 
         Tensor element_op(const Tensor &other, Operator op) const;
-        Tensor element_op(const int scale, Operator op) const;
+
+        Tensor element_op(int scale, Operator op) const;
 
         Tensor operator+(const Tensor &other) const; // 加法
-        Tensor operator+(const int scale) const;
+        Tensor operator+(int scale) const;
 
         Tensor operator-(const Tensor &other) const; // 减法
-        Tensor operator-(const int scale) const;
+        Tensor operator-(int scale) const;
 
-        Tensor operator*(const Tensor &other) const; // 矩阵乘法
-        Tensor operator*(const int scale) const;
+        Tensor operator*(const Tensor &other) const; // 逐元素乘法
+        Tensor operator*(int scale) const;
 
-        Tensor operator&(const Tensor &other); // 逐元素乘法
+        Tensor matrix_mul(const Tensor &other) const;
 
+    private:
+        Shape _shape;
+        double *_data;
+        enum Operator {
+            Add, Sub, Mul
+        };
     };
 
 

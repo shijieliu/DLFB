@@ -35,6 +35,7 @@ void test_mul(const Tensor &lhs, const Tensor &rhs) {
     rhs.display();
     res.display();
 }
+
 int main() {
     Shape shape{3, 2};
     Tensor tensor{shape};

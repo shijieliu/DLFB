@@ -9,7 +9,7 @@
 #include "tensor.h"
 
 namespace lr {
-    template<typename T>
+
     class Optimizer {
     public:
         Optimizer();

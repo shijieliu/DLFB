@@ -7,24 +7,21 @@
 
 #include <vector>
 #include "tensor.h"
+#include "graph.h"
 
 namespace lr {
     class Node {
     public:
-        Node(Tensor &tensor);
+        Node(Graph &graph = Graph::getInstance()) : m_graph(graph) {}
 
         void AddInNode(Node *innode);
 
         void AddOutNode(Node *outNode);
 
-        virtual void Forward();
-
-        virtual void Backward();
-
     private:
-        std::vector<Node *> mInNodes;
-        std::vector<Node *> mOutNodes;
-        Tensor mTensor;
+        std::vector<Node *> m_in_nodes;
+        std::vector<Node *> m_out_nodes;
+        Graph m_graph;
     };
 
 
