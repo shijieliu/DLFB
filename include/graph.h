@@ -6,32 +6,40 @@
 #define LIGHTLR_GRGraphPH_H
 
 #include <unordered_map>
+#include <string>
+#include <memory>
 
 namespace lr {
-    class Node;
+    class Parameter;
+
+    class OperatorNode;
 
     class Graph {
     public:
-        static Graph getInstance() {
+        static Graph &getInstance() {
+            static Graph m_instance;
             return m_instance;
         }
 
-        void AddNode(Node *node);
+        Graph(const Graph &other) = delete;
 
-        void Transpose();
+        Graph &operator=(const Graph &other) = delete;
 
-        void TopologicalSort();
+        void AddNode(OperatorNode *father, Parameter *child);
 
-        ~Graph() {}
+        void AddNode(Parameter *father, OperatorNode *child);
+
+        std::vector<OperatorNode *> Transpose(Parameter *dst);
+
+        std::vector<OperatorNode *> TopologicalSort(Parameter *dst);
 
     private:
-        Graph() {
-            //do whatever
-        }
+        Graph() {}
 
-        static Graph m_instance;
-        std::vector<Node *> m_nodes;
-
+        std::unordered_multimap<std::string, std::string> m_graph;
+        std::unordered_map<std::string, Parameter *> m_parameter_map;
+        std::unordered_map<std::string, OperatorNode *> m_operator_map;
     };
+
 }
 #endif //LIGHTLR_GRGraphPH_H

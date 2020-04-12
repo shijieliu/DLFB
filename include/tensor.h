@@ -17,6 +17,23 @@
 namespace lr {
     using Shape = std::vector<int>;
 
+    
+    //
+//        Tensor element_op(const Tensor &other, Operator op) const;
+//
+//        Tensor element_op(int scale, Operator op) const;
+//
+//        Tensor operator+(const Tensor &other) const; // 加法
+//        Tensor operator+(int scale) const;
+//
+//        Tensor operator-(const Tensor &other) const; // 减法
+//        Tensor operator-(int scale) const;
+//
+//        Tensor operator*(const Tensor &other) const; // 逐元素乘法
+//        Tensor operator*(int scale) const;
+//
+//        Tensor matrix_mul(const Tensor &other) const;
+
     class Tensor {
     public:
         explicit Tensor(const Shape &shape);
@@ -97,27 +114,9 @@ namespace lr {
             printf("\n");
         }
 
-        Tensor element_op(const Tensor &other, Operator op) const;
-
-        Tensor element_op(int scale, Operator op) const;
-
-        Tensor operator+(const Tensor &other) const; // 加法
-        Tensor operator+(int scale) const;
-
-        Tensor operator-(const Tensor &other) const; // 减法
-        Tensor operator-(int scale) const;
-
-        Tensor operator*(const Tensor &other) const; // 逐元素乘法
-        Tensor operator*(int scale) const;
-
-        Tensor matrix_mul(const Tensor &other) const;
-
     private:
         Shape _shape;
         double *_data;
-        enum Operator {
-            Add, Sub, Mul
-        };
     };
 
 

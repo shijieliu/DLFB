@@ -5,15 +5,23 @@
 #ifndef LIGHTLR_ADD_H
 #define LIGHTLR_ADD_H
 
-#include "operator/operator.h"
+#include "node.h"
 
 namespace lr {
-    class AddNode : public OperatorNode {
-        AddNode();
+    class Add : public OperatorNode {
+    public:
+        Add(std::string name) : OperatorNode(name) {}
 
-        void Forward();
+        void Forward() override;
 
-        void Backward();
+        void Backward() override;
+
+        Shape GetOutShape() override;
+
+        virtual ~Add(){
+            printf("[Add deconstruct]\n");
+        }
+
     };
 }
 #endif //LIGHTLR_ADD_H
