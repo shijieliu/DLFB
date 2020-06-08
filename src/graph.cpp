@@ -3,81 +3,86 @@
 //
 
 #include <vector>
-#include "graph.h"
-#include "node.h"
+#include "core/graph.h"
+#include "core/node.h"
 #include <queue>
 #include <deque>
-namespace lr {
-    std::vector<OperatorNode *> Graph::Transpose(Parameter *dst) {
 
-        return std::vector<OperatorNode *>();
+namespace dl
+{
+
+
+void GraphExecutor::forward(std::unordered_map<Node*, Tensor>& input_data){
+    for(auto& datapack: input_data){
+
     }
+}
 
-    std::vector<OperatorNode *> Graph::TopologicalSort(Parameter *dst) {
-        printf("[Graph::TopologicalSort]Graph node num %d\n", m_graph.size());
-        std::unordered_map<std::string, int> dist;
-        std::queue<std::string> sort_queue;
-        std::vector<OperatorNode *> sort_res;
-        sort_res.reserve(m_operator_map.size());
-
-        for(auto iter_graph = m_graph.begin(); iter_graph != m_graph.end(); ++iter_graph){
-            const std::string& child_name = iter_graph->first;
-            if(dist.find(child_name) == dist.end()){
-                dist[child_name] = 0;
-            }
-            const std::string& father_name = iter_graph->second;
-            if(dist.find(father_name) == dist.end()){
-                dist[father_name] = 1;
-            }else{
-                dist[father_name] += 1;
-            }
-        }
-
-        for(auto iter_dist = dist.begin(); iter_dist != dist.end(); ++iter_dist){
-            if(iter_dist->second == 0){
-                sort_queue.push(iter_dist->first);
-            }
-        }
-
-        while(!sort_queue.empty() && dist[dst->m_name] > 0){
-            std::string current_name = sort_queue.front();
-            sort_queue.pop();
-            auto father_range = m_graph.equal_range(current_name);
-            for(auto father = father_range.first; father != father_range.second; ++father){
-                std::string father_name = father->second;
-                dist[father_name]--;
-                if(dist[father_name] == 0){
-                    sort_queue.push(father_name);
-                    if(m_operator_map.find(father_name) != m_operator_map.end()){
-                        sort_res.push_back(m_operator_map[father_name]);
-                    }
-                }
-            }
-        }
-        return sort_res;
-    }
-
-    void Graph::AddNode(OperatorNode *father, Parameter *child) {
-        m_graph.insert(std::make_pair(child->m_name, father->m_name));
-        printf("[Graph::AddNode]Graph father node: %s, child node: %s\n", father->m_name.c_str(), child->m_name.c_str());
-        if(m_operator_map.find(father->m_name) == m_operator_map.end()){
-            m_operator_map[father->m_name]= father;
-        }
-        if(m_parameter_map.find(child->m_name) == m_parameter_map.end()){
-            m_parameter_map[child->m_name] = child;
-        }
-    }
-
-    void Graph::AddNode(Parameter *father, OperatorNode *child) {
-        m_graph.insert(std::make_pair(child->m_name, father->m_name));
-        printf("[Graph::AddNode]Graph father node: %s, child node: %s\n", father->m_name.c_str(), child->m_name.c_str());
-
-        if(m_operator_map.find(child->m_name) == m_operator_map.end()){
-            m_operator_map[child->m_name] = child;
-        }
-        if(m_parameter_map.find(father->m_name) == m_parameter_map.end()){
-            m_parameter_map[father->m_name] = father;
-        }
-    }
+void GraphExecutor::backward(){
 
 }
+
+void Graph::transpose() {
+    for (auto &node_pair: mGraph) {
+        mTransposeGraph.insert(std::make_pair(node_pair.second, node_pair.first));
+    }
+}
+
+GraphExecutor Graph::compile(std::initializer_list<Node*>& end_nodes_){
+    std::unordered_set<std::string> end_nodes;
+    for(auto end_node : end_nodes_){
+        end_nodes.insert(end_node->mName);
+    }
+    transpose();
+    return GraphExecutor(topologicalSort(mGraph, end_nodes), topologicalSort(mTransposeGraph, end_nodes));
+}
+
+std::vector<Node *> Graph::topologicalSort(const GraphRelationMap &graph, const std::unordered_set<std::string>& dst) const {
+    LOG_INFO("Graph node num %lu\n", graph.size());
+    std::unordered_map<std::string, int> dist;
+    std::queue<std::string> sort_queue;
+    std::vector<Node *> sort_res;
+    sort_res.reserve(graph.size());
+
+    auto get_prenode_name = [](GraphRelationMap::const_iterator& pack){
+        return pack->first;
+    };
+    auto get_child_name = [](GraphRelationMap::const_iterator& pack){
+        return pack->second;
+    };
+
+    auto get_node_name = [](const GraphAllocMap::value_type& pack) -> const std::string& {
+        return pack.first;
+    };
+
+    for(const auto& node: mNodeMap){
+        const std::string &node_name = get_node_name(node);
+        if(graph.find(node_name) == graph.end()){
+            dist[node_name] = 0;
+            sort_queue.push(get_node_name(node));
+        }else{
+            const auto& pre_nodes_iter = graph.equal_range(node_name);
+            while(pre_nodes_iter.first != pre_nodes_iter.second){
+                dist[node_name] += 1;
+            }
+        }
+    }
+
+    while (!sort_queue.empty()) {
+        std::string current_name = sort_queue.front();
+        sort_queue.pop();
+        auto prenodes_range = graph.equal_range(current_name);
+        for (auto prenode_iterator = prenodes_range.first; prenode_iterator != prenodes_range.second; ++prenode_iterator) {
+            const std::string& prenode_name = get_prenode_name(prenode_iterator);
+            dist[prenode_name]--;
+            if(dst.find(prenode_name) == dst.end()){
+                continue;
+            }
+            if (dist[prenode_name] == 0) {
+                sort_queue.push(prenode_name);
+            }
+        }
+    }
+    return sort_res;
+}
+} // namespace dl

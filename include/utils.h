@@ -6,14 +6,14 @@
 #define LIGHTLR_UTILS_H
 
 
-#include "tensor.h"
+#include "core/tensor.h"
 #include <string>
 #include <string.h>
 #include <iostream>
 #include <sstream>
 #include <fstream>
 
-namespace lr{
+namespace dl{
     using std::string;
 
     template<typename T>

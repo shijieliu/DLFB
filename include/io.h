@@ -10,7 +10,7 @@
 #include <fstream>
 #include <sstream>
 
-namespace lr {
+namespace dl {
     template<typename T>
     Tensor<T> ReadTensorFromFile(const string &filename) {
         std::ifstream fs(filename);

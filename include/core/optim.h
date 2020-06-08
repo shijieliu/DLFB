@@ -8,14 +8,13 @@
 #include <vector>
 #include "tensor.h"
 
-namespace lr {
-
+namespace dl {
+    class Node;
     class Optimizer {
     public:
         Optimizer();
-
         void step();
-
+        void zeroGrad(Node* endpoint);
     };
 }
 

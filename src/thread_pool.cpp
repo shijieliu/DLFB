@@ -5,7 +5,7 @@
 #include "utils/thread_pool.h"
 #include <future>
 
-namespace lr {
+namespace dl {
     ThreadPool::ThreadPool(size_t num) : _num(num) {
         init();
     }

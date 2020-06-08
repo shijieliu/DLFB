@@ -4,17 +4,20 @@
 
 #include "operator/add.h"
 
-namespace lr {
+namespace dl {
     void Add::Forward() {
-        printf("[Add::Forward]");
+        printf("[Add::Forward]\n");
         assert(m_out_parameters.size() == 1);
-//        for (Parameter* in_node: m_in_parameters) {
-//            m_out_parameters[0]->MutuableData() += in_node->Data();
-//        }
+        for (Parameter* in_node: m_in_parameters) {
+            AddOp(m_out_parameters[0]->Data(), in_node->Data(), m_out_parameters[0]->MutuableData());
+        }
     }
 
     void Add::Backward() {
-
+        printf("[Add::Backward]\n");
+        for(Parameter* in_node: m_in_parameters){
+            in_node->MutuableGradient()->ones();
+        }
     }
 
     Shape Add::GetOutShape() {
