@@ -3,7 +3,7 @@
 
 namespace dl {
 namespace cuda {
-__global__ void CudaAddKernal(float *x, float *y, float *res, int64_t len) {
+__global__ void CudaAddKernal(float *x, float *y, float *res, int len) {
     int thread_id = threadIdx.x;
     int block_id  = blockIdx.x;
 
@@ -14,7 +14,7 @@ __global__ void CudaAddKernal(float *x, float *y, float *res, int64_t len) {
     }
 }
 
-void CudaAdd(const float *x, const float *y, float *res, int64_t len) {
+void CudaAdd(const float *x, const float *y, float *res, int len) {
     float *devx, *devy, *dev_res;
     cudaMalloc((void **)&devx, sizeof(float) * len);
     cudaMalloc((void **)&devy, sizeof(float) * len);
@@ -37,7 +37,7 @@ void CudaAdd(const float *x, const float *y, float *res, int64_t len) {
 //     int x = threadIdx.y + (blockDim.y * blockIdx.y);
 //     int y = threadIdx.z + (blockDim.z * blockIdx.z);
 
-//     auto outIndex = expand(y, H, x, W, k);
+//     auto outIndex = Expand(y, H, x, W, k);
 
 //     double sum = 0.0;
 
@@ -45,8 +45,8 @@ void CudaAdd(const float *x, const float *y, float *res, int64_t len) {
 //     for (int c = 0; c < C; ++c) {
 //         for (int j = 0; j < FH; ++j) {
 //             for (int i = 0; i < FW; ++i) {
-//                 auto filterIndex = expand(FH - 1 - j, FH, FW - 1 - i, FW, c, C, k);
-//                 auto imageIndex  = expand(y + j, W + 2, x + i, H + 2, c);
+//                 auto filterIndex = Expand(FH - 1 - j, FH, FW - 1 - i, FW, c, C, k);
+//                 auto imageIndex  = Expand(y + j, W + 2, x + i, H + 2, c);
 //                 sum += (filter[filterIndex] * paddedImage[imageIndex]);
 //             }
 //         }
@@ -70,40 +70,40 @@ void CudaAdd(const float *x, const float *y, float *res, int64_t len) {
 //     extern __shared__ double tile[];
 
 //     for (int c = 0; c < C; ++c) {
-//         tile[expand(tidy, Y_BOUND, tidx, X_BOUND, c)] = paddedImage[expand(y, W + 2, x, H + 2, c)];
+//         tile[Expand(tidy, Y_BOUND, tidx, X_BOUND, c)] = paddedImage[Expand(y, W + 2, x, H + 2, c)];
 //         // corner loads
 //         if (tidx == X_BLOCK - 1 && tidy == Y_BLOCK - 1) {
 //             for (int xx = 0; xx < FW; ++xx) {
 //                 for (int yy = 0; yy < FH; ++yy) {
 //                     if (xx == 0 and yy == 0)
 //                         continue;
-//                     tile[expand(tidy + yy, Y_BOUND, tidx + xx, X_BOUND, c)] =
-//                         paddedImage[expand(y + yy, W + 2, x + xx, H + 2, c)];
+//                     tile[Expand(tidy + yy, Y_BOUND, tidx + xx, X_BOUND, c)] =
+//                         paddedImage[Expand(y + yy, W + 2, x + xx, H + 2, c)];
 //                 }
 //             }
 //         } // edge loads
 //         else if (tidx == X_BLOCK - 1) {
 //             for (int xx = 1; xx < FW; ++xx) {
-//                 tile[expand(tidy, Y_BOUND, tidx + xx, X_BOUND, c)] =
-//                     paddedImage[expand(y, W + 2, x + xx, H + 2, c)];
+//                 tile[Expand(tidy, Y_BOUND, tidx + xx, X_BOUND, c)] =
+//                     paddedImage[Expand(y, W + 2, x + xx, H + 2, c)];
 //             }
 //         } else if (tidy == Y_BLOCK - 1) {
 //             for (int yy = 1; yy < FH; ++yy) {
-//                 tile[expand(tidy + yy, Y_BOUND, tidx, X_BOUND, c)] =
-//                     paddedImage[expand(y + yy, W + 2, x, H + 2, c)];
+//                 tile[Expand(tidy + yy, Y_BOUND, tidx, X_BOUND, c)] =
+//                     paddedImage[Expand(y + yy, W + 2, x, H + 2, c)];
 //             }
 //         }
 //     }
 //     __syncthreads();
 
-//     auto   outIndex = expand(y, H, x, W, k);
+//     auto   outIndex = Expand(y, H, x, W, k);
 //     double sum      = 0.0;
 // #pragma unroll 4
 //     for (int c = 0; c < C; ++c) {
 //         for (int j = 0; j < FH; ++j) {
 //             for (int i = 0; i < FW; ++i) {
-//                 auto filterIndex = expand(FH - 1 - j, FH, FW - 1 - i, FW, c, C, k);
-//                 auto imageIndex  = expand(tidy + j, Y_BOUND, tidx + i, X_BOUND, c);
+//                 auto filterIndex = Expand(FH - 1 - j, FH, FW - 1 - i, FW, c, C, k);
+//                 auto imageIndex  = Expand(tidy + j, Y_BOUND, tidx + i, X_BOUND, c);
 //                 sum += (filter[filterIndex] * tile[imageIndex]);
 //             }
 //         }

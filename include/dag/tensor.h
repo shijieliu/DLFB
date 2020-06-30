@@ -17,9 +17,9 @@
 namespace dl {
 using Shape = std::vector<int>;
 
-std::string FormatShape(const Shape& shape){
+std::string FormatShape(const Shape &shape) {
     std::string res("(");
-    for(int s : shape){
+    for (int s : shape) {
         res += std::to_string(s);
         res += ",";
     }
@@ -29,7 +29,7 @@ std::string FormatShape(const Shape& shape){
 class Tensor {
   public:
     Tensor() {}
-    explicit Tensor(std::vector<float> &                 data,
+    explicit Tensor(std::vector<float> &             data,
                     const std::initializer_list<int> shape)
         : Tensor(data, Shape(shape.begin(), shape.end())) {}
 
@@ -111,23 +111,24 @@ class Tensor {
     int32_t mDevice;
 };
 
-
-void DisplayTensor(const dl::Tensor* t, const std::string& tensor_name="Tensor") {
+void DisplayTensor(const dl::Tensor * t,
+                   const std::string &tensor_name = "Tensor") {
     std::string shape_info = FormatShape(t->shape());
 
     std::string value_info("[");
     for (int i = 0; i < t->size(); ++i) {
         value_info.append(std::to_string(t->data()[i]));
-        if(i < 10){
+        if (i < 10) {
             value_info.append(",");
-        }else{
-            value_info.append("...");break;
+        } else {
+            value_info.append("...");
+            break;
         }
     }
     value_info.append("]");
-    LOG_INFO("\n\t%s info:\n\t\tshape:%s\n\t\tvalue:%s", tensor_name.c_str(), shape_info.c_str(), value_info.c_str());
+    LOG_INFO("\n\t%s info:\n\t\tshape:%s\n\t\tvalue:%s", tensor_name.c_str(),
+             shape_info.c_str(), value_info.c_str());
 }
-
 
 inline void Add(const Tensor &lhs, const Tensor &rhs, Tensor *out) {
     CHECK_EQ(lhs.shape(), rhs.shape());
@@ -150,12 +151,10 @@ inline void Mul(const Tensor &lhs, const Tensor &rhs, Tensor *out) {
     SIMD::AvxVecMul(lhs.data(), rhs.data(), out->data(), out->size());
 }
 
-
 inline void Mul(const Tensor &lhs, const float rhs, Tensor *out) {
     CHECK_EQ(out->shape(), lhs.shape());
     SIMD::AvxVecMul(lhs.data(), rhs, out->data(), out->size());
 }
-
 
 inline void Div(const Tensor &lhs, const Tensor &rhs, Tensor *out) {
     CHECK_EQ(lhs.shape(), rhs.shape());
@@ -253,22 +252,26 @@ inline void Rotate(const Tensor &inp, Tensor *out) {
  * @return:
  */
 inline void Conv2D(const Tensor &x, const Tensor &weight, Tensor *out,
-                   int stride, int padding,
-                   const std::string &padding_mode) {
+                   int stride, int padding, const std::string &padding_mode) {
     CHECK_EQ(x.shape().size(), 4);
     CHECK_EQ(weight.shape().size(), 4);
-    LOG_DEBUG("\n\tTensor Conv2D args:\n\t\tx shape:(%d, %d, %d, %d)\n\t\tweight shape:(%d, %d, %d, %d)\n\t\tstride:%d\n\t\tpadding:%d", x.shape()[0], x.shape()[1], x.shape()[2], x.shape()[3], weight.shape()[0], weight.shape()[1], weight.shape()[2], weight.shape()[3], stride, padding);
+    LOG_DEBUG("\n\tTensor Conv2D args:\n\t\tx shape:(%d, %d, %d, "
+              "%d)\n\t\tweight shape:(%d, %d, %d, "
+              "%d)\n\t\tstride:%d\n\t\tpadding:%d",
+              x.shape()[0], x.shape()[1], x.shape()[2], x.shape()[3],
+              weight.shape()[0], weight.shape()[1], weight.shape()[2],
+              weight.shape()[3], stride, padding);
 
     CHECK_EQ(x.shape()[1], weight.shape()[1]);
 
-    int              c_out = weight.shape()[0];
-    int              c_in  = weight.shape()[1];
-    int              k     = weight.shape()[2];
-    int              n     = x.shape()[0];
-    int              h     = x.shape()[2];
-    int              w     = x.shape()[3];
-    int              h_out     = (h + 2 * padding - k) / stride + 1;
-    int              w_out     = (w + 2 * padding - k) / stride + 1;
+    int c_out = weight.shape()[0];
+    int c_in  = weight.shape()[1];
+    int k     = weight.shape()[2];
+    int n     = x.shape()[0];
+    int h     = x.shape()[2];
+    int w     = x.shape()[3];
+    int h_out = (h + 2 * padding - k) / stride + 1;
+    int w_out = (w + 2 * padding - k) / stride + 1;
     LOG_DEBUG("(h_out: %d, w_out: %d)", h_out, w_out);
     CHECK_EQ(out->shape()[0], n);
     CHECK_EQ(out->shape()[1], c_out);
@@ -296,19 +299,20 @@ inline void Conv2D(const Tensor &x, const Tensor &weight, Tensor *out,
     {
 
         for (int n_step = 0; n_step < n; ++n_step) {
-            for (int h_step = 0; h_step <= h - k; h_step += stride) {
-                for (int w_step = 0; w_step <= w - k; w_step += stride) {
-                    for (int c_step = 0; c_step < c_in; ++c_step) {
+            for (int c_step = 0; c_step < c_in; ++c_step) {
+                for (int h_step = 0; h_step < h_out; ++h_step) {
+                    for (int w_step = 0; w_step < w_out; ++w_step) {
                         for (int k1_step = 0; k1_step < k; ++k1_step) {
                             for (int k2_step = 0; k2_step < k; ++k2_step) {
-                                int offset_flatten_x = Expand(
-                                    w_step, w - k + 1, h_step, h - k + 1,
-                                    n_step, n, k2_step, k, k1_step, k, c_step);
-                                int offset_x = Expand(w_step + k2_step, w,
-                                                         h_step + k1_step, h,
-                                                         c_step, c_in, n_step);
-                                *(flatten_x.data() + offset_flatten_x) =
-                                    *(x.data() + offset_x);
+                                int offset_flatten_x =
+                                    Expand(w_step, w_out, h_step, h_out, n_step,
+                                           n, k2_step, k, k1_step, k, c_step);
+                                int offset_x =
+                                    Expand(w_step * stride + k2_step, w,
+                                           h_step * stride + k1_step, h, c_step,
+                                           c_in, n_step);
+                                flatten_x.data()[offset_flatten_x] =
+                                    x.data()[offset_x];
                             }
                         }
                     }
@@ -324,9 +328,9 @@ inline void Conv2D(const Tensor &x, const Tensor &weight, Tensor *out,
 
     for (int c_step = 0; c_step < c_out; ++c_step) {
         for (int n_step = 0; n_step < n; ++n_step) {
-            memcpy(out->data() + Expand(c_step, c_out, n_step),
-                   tmp_out.data() + Expand(n_step, n, c_step),
-                   sizeof(float) * (h - k + 1) * (w - k + 1));
+            memcpy(out->data() + Expand(c_step, c_out, n_step) * h_out * w_out,
+                   tmp_out.data() + Expand(n_step, n, c_step) * h_out * w_out,
+                   sizeof(float) * h_out * w_out);
         }
     }
 }
