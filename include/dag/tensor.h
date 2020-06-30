@@ -112,7 +112,7 @@ class Tensor {
 };
 
 
-void DisplayTensor(const dl::Tensor* t) {
+void DisplayTensor(const dl::Tensor* t, const std::string& tensor_name="Tensor") {
     std::string shape_info = FormatShape(t->shape());
 
     std::string value_info("[");
@@ -125,7 +125,7 @@ void DisplayTensor(const dl::Tensor* t) {
         }
     }
     value_info.append("]");
-    LOG_INFO("\n\tTensor info:\n\t\tshape:%s\n\t\tvalue:%s", shape_info.c_str(), value_info.c_str());
+    LOG_INFO("\n\t%s info:\n\t\tshape:%s\n\t\tvalue:%s", tensor_name.c_str(), shape_info.c_str(), value_info.c_str());
 }
 
 

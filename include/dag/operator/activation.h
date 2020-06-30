@@ -1,7 +1,7 @@
 /*
  * @Author: liushijie
  * @Date: 2020-06-20 19:07:24
- * @LastEditTime: 2020-06-23 19:24:44
+ * @LastEditTime: 2020-06-30 13:36:45
  * @LastEditors: liushijie
  * @Description:
  * @FilePath: /LightLR/include/dag/operator/activation.h
@@ -22,15 +22,15 @@ class ReLUImpl : public OperatorNodeBase {
 
     void forward(const std::vector<const Tensor *> &inps,
                  Tensor *                           outs) override {
+        mActivationIndex.clear();
         CHECK_EQ(inps.size(), 1);
         const Tensor *before_activation = inps[0];
         CHECK_EQ(before_activation->size(), outs->size());
-        mActivationIndex.clear();
         std::vector<int64_t> index(outs->size());
         std::iota(index.begin(), index.end(), 0);
 
         std::transform(index.begin(), index.end(), outs->data(),
-                       [&](int64_t idx) -> float {
+                       [&, this](int64_t idx) -> float {
                            if (before_activation->data()[idx] > 0) {
                                mActivationIndex.insert(idx);
                                return before_activation->data()[idx];
@@ -42,7 +42,7 @@ class ReLUImpl : public OperatorNodeBase {
 
     void backward(const Tensor *diff, std::vector<Tensor *> &grads) override {
         CHECK_EQ(grads.size(), 1);
-        Tensor *            delta = grads[0];
+        Tensor *             delta = grads[0];
         std::vector<int64_t> index(delta->size());
         std::iota(index.begin(), index.end(), 0);
 

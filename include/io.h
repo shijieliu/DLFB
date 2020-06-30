@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-06-20 07:07:04
- * @LastEditTime: 2020-06-29 20:02:25
+ * @LastEditTime: 2020-06-30 13:01:58
  * @LastEditors: liushijie
  * @Description: In User Settings Edit
  * @FilePath: /LightLR/include/io.h
@@ -38,6 +38,7 @@ void ReadMnistImageData(const char *filename, Tensor *res) {
     n_images     = __builtin_bswap32(n_images);
     n_rows       = __builtin_bswap32(n_rows);
     n_cols       = __builtin_bswap32(n_cols);
+    n_images = 100;
     LOG_INFO("\n\timage data "
              "meta\n\t\tmagic_number:%d\n\t\tn_images:%d\n\t\tn_rows:%d\n\t\tn_cols:%d",
              magic_number, n_images, n_rows, n_cols);
@@ -68,6 +69,8 @@ void ReadMnistLabelData(const char *filename, Tensor *res) {
     fread(&n_images, sizeof(n_images), 1, stream);
     magic_number = __builtin_bswap32(magic_number);
     n_images     = __builtin_bswap32(n_images);
+    n_images = 100;
+
     LOG_INFO("\n\timage data meta\n\t\tmagic_number:%d\n\t\tn_images:%d",
              magic_number, n_images);
     res->reshape({n_images});
@@ -104,9 +107,9 @@ void Shuffle(Tensor* image, Tensor* label){
         memcpy(image->data() + offset * i, image_copy.data() + idx[i] * offset, sizeof(float) * offset);
     }
 
-    Tensor label_copy = *image;
+    Tensor label_copy = *label;
     for(int i = 0; i < n; ++i){
-        image->data()[i] = image_copy.data()[idx[i]];
+        label->data()[i] = label_copy.data()[idx[i]];
     }
 }
 
@@ -121,7 +124,6 @@ void Split(const Tensor& image, const Tensor& label, int64_t batchsize, std::vec
         
         Tensor curr_label({batchsize});
         curr_label.copyFrom(label.data() + b * batchsize, label.data() + (b + 1) * batchsize);
-        LOG_INFO("batch label shape %s", FormatShape(curr_label.shape()).c_str());
         
         batch_image->push_back(std::move(curr_image));
         batch_label->push_back(std::move(curr_label));

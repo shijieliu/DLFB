@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-06-20 07:05:48
- * @LastEditTime: 2020-06-29 11:51:46
+ * @LastEditTime: 2020-06-30 13:45:27
  * @LastEditors: liushijie
  * @Description: In User Settings Edit
  * @FilePath: /LightLR/include/dag/operator/add.h
@@ -33,7 +33,7 @@ class AddImpl final : public OperatorNodeBase {
                     for(int64_t c = 0; c < outs->shape()[1]; ++c){
                         for(int64_t h = 0; h < outs->shape()[2]; ++h){
                             for(int64_t w = 0; w < outs->shape()[3]; ++w){
-                                *(outs->data() + expand(w, outs->shape()[2], h, outs->shape()[1], c, outs->shape()[2], n)) = t->data()[c];
+                                expand_t.data()[expand(w, outs->shape()[3], h, outs->shape()[2], c, outs->shape()[1], n)] = t->data()[c];
                             }
                         }
                     }
