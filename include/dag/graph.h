@@ -29,7 +29,7 @@ class Graph {
     template <typename Opr, typename... Params>
     DataNode *add(std::vector<DataNode *> &pre_nodes, Params... params);
 
-    DataNode *add(const Shape &shape, bool is_data_provider);
+    DataNode *add(const Shape &shape, bool requires_grad);
 
     // run the graph
     struct GraphExecutor {
@@ -59,28 +59,29 @@ class Graph {
         std::vector<OperatorNodeBase *> bck_nodes;
         ThreadPool &                    pool = ThreadPool::Instance();
     };
-    
-    GraphExecutor compile(std::initializer_list<DataNode *> end_nodes_);
 
-    std::vector<DataNode*> params();
+    GraphExecutor compile(std::initializer_list<DataNode *> start_nodes,
+                          std::initializer_list<DataNode *> end_nodes_);
+
+    std::vector<DataNode *> params();
 
   private:
     using GraphRelationMap = std::unordered_multimap<int, int>;
     GraphRelationMap mGraph;
     GraphRelationMap mTransposeGraph;
-    std::unordered_map<int, int> mDataOprRelationGraph;
+    std::unordered_map<int, int>                       mDataOprRelationGraph;
     std::unordered_map<int, std::unique_ptr<DataNode>> mDataNodes;
     std::vector<std::unique_ptr<OperatorNodeBase>> mOprNodes;
-    std::vector<int>                           mDataProviders;
+    std::vector<int>                               mDataProviders;
     Graph();
 
     void transpose();
-    std::unordered_map<int, int>
-        prepareTopologicalSort(const GraphRelationMap &graph,
-                               std::queue<int> *   start_queue) const;
+    void prepareTopologicalSort(const GraphRelationMap &graph,
+                                std::unordered_map<int, int> *dist) const;
     std::vector<OperatorNodeBase *>
-        topologicalSort(const GraphRelationMap &           graph,
-                        const GraphRelationMap &           transpose_graph,
+        topologicalSort(const GraphRelationMap &       graph,
+                        const GraphRelationMap &       transpose_graph,
+                        const std::unordered_set<int> &src,
                         const std::unordered_set<int> &dst) const;
 };
 
@@ -143,15 +144,21 @@ Graph::Graph() {}
 Graph::~Graph() = default;
 
 Graph::GraphExecutor
-    Graph::compile(std::initializer_list<DataNode *> end_nodes_) {
+    Graph::compile(std::initializer_list<DataNode *> start_nodes_,
+                   std::initializer_list<DataNode *> end_nodes_) {
+    std::unordered_set<int> start_nodes;
     std::unordered_set<int> end_nodes;
-    for (auto end_node : end_nodes_) {
-        int opr_node_uid = mDataOprRelationGraph[end_node->mUID];
-        end_nodes.insert(opr_node_uid);
-    }
+    std::transform(start_nodes_.begin(), start_nodes_.end(),
+                   std::inserter(start_nodes, start_nodes.begin()), [this](DataNode *node) {
+                       return mDataOprRelationGraph[node->mUID];
+                   });
+    std::transform(
+        end_nodes_.begin(), end_nodes_.end(), std::inserter(end_nodes, end_nodes.begin()),
+        [this](DataNode *node) { return mDataOprRelationGraph[node->mUID]; });
     transpose();
-    return GraphExecutor(topologicalSort(mGraph, mTransposeGraph, end_nodes),
-                         topologicalSort(mTransposeGraph, mGraph, end_nodes));
+    return GraphExecutor(
+        topologicalSort(mGraph, mTransposeGraph, start_nodes, end_nodes),
+        topologicalSort(mTransposeGraph, mGraph, end_nodes, start_nodes));
 }
 
 template <typename Opr, typename... Params>
@@ -170,9 +177,9 @@ DataNode *Graph::add(std::vector<DataNode *> &pre_nodes, Params... params) {
         if (pre_opr_it == mDataOprRelationGraph.end()) {
             continue;
         }
-        int pre_opr_node_uid   = pre_opr_it->second;
-        auto    pre_opr_node_range = mGraph.equal_range(opr_node_uid);
-        bool    has_inserted       = false;
+        int  pre_opr_node_uid   = pre_opr_it->second;
+        auto pre_opr_node_range = mGraph.equal_range(opr_node_uid);
+        bool has_inserted       = false;
         for (auto relation_it = pre_opr_node_range.first;
              relation_it != pre_opr_node_range.second; ++relation_it) {
             if (relation_it->second == pre_opr_node_uid) {
@@ -195,47 +202,41 @@ DataNode *Graph::add(std::vector<DataNode *> &pre_nodes, Params... params) {
     return mDataNodes[end_node_uid].get();
 }
 
-DataNode *Graph::add(const Shape &shape, bool is_data_provider) {
+DataNode *Graph::add(const Shape &shape, bool requires_grad) {
     int data_node_uid = mDataNodes.size();
     mDataNodes.insert(std::make_pair(
-        data_node_uid,
-        std::unique_ptr<DataNode>(new DataNode(data_node_uid, shape, true))));
-    if (is_data_provider) {
-        mDataProviders.push_back(data_node_uid);
-    }
+        data_node_uid, std::unique_ptr<DataNode>(
+                           new DataNode(data_node_uid, shape, requires_grad))));
     return mDataNodes[data_node_uid].get();
 }
 
-std::unordered_map<int, int>
-    Graph::prepareTopologicalSort(const GraphRelationMap &graph,
-                                  std::queue<int> *   start_queue) const {
-    std::unordered_map<int, int> dist;
+void Graph::prepareTopologicalSort(const GraphRelationMap &graph,
+                                   std::unordered_map<int, int> *dist) const {
     for (int uid = 0; uid < mOprNodes.size(); ++uid) {
-        if (graph.find(uid) == graph.end()) {
-            start_queue->push(uid);
-        }
-        dist[uid] = graph.count(uid);
+        dist->insert(std::make_pair(uid, graph.count(uid)));
     }
-    return dist;
 }
 
 std::vector<OperatorNodeBase *>
-    Graph::topologicalSort(const GraphRelationMap &           graph,
-                           const GraphRelationMap &           transpose_graph,
+    Graph::topologicalSort(const GraphRelationMap &       graph,
+                           const GraphRelationMap &       transpose_graph,
+                           const std::unordered_set<int> &src,
                            const std::unordered_set<int> &dst) const {
-    std::queue<int>             sort_queue;
+    std::queue<int>                 sort_queue;
     std::vector<OperatorNodeBase *> sort_res;
     sort_res.reserve(graph.size());
 
     // 1. calc in and out of nodes
-    std::unordered_map<int, int> dist =
-        prepareTopologicalSort(graph, &sort_queue);
+    std::unordered_map<int, int> dist;
+    prepareTopologicalSort(graph, &dist);
 
     // 2. topological sort
-
+    for(int uid : src){
+        sort_queue.push(uid);
+    }
     while (!sort_queue.empty()) {
-        int current_uid     = sort_queue.front();
-        auto *  current_opr_ptr = mOprNodes[current_uid].get();
+        int   current_uid     = sort_queue.front();
+        auto *current_opr_ptr = mOprNodes[current_uid].get();
         sort_res.push_back(current_opr_ptr);
         sort_queue.pop();
         if (dst.find(current_uid) != dst.end()) {
@@ -256,13 +257,12 @@ std::vector<OperatorNodeBase *>
     return sort_res;
 }
 
-std::vector<DataNode*> Graph::params(){
-    std::vector<DataNode*> ret;
-    for(auto it = mDataNodes.begin(); it != mDataNodes.end(); ++it){
+std::vector<DataNode *> Graph::params() {
+    std::vector<DataNode *> ret;
+    for (auto it = mDataNodes.begin(); it != mDataNodes.end(); ++it) {
         ret.push_back(it->second.get());
     }
     return ret;
 }
-
 
 } // namespace dl

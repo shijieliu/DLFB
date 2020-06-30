@@ -191,7 +191,20 @@ inline void Mat(const Tensor &lhs, const Tensor &rhs, Tensor *out) {
         }
     }
 }
-
+/**
+ * @description:
+ * @param {type} lns (n, m) out (m, n)
+ * @return:
+ */
+inline void Transpose(const Tensor &inp, Tensor *out) {
+    CHECK_EQ(inp.shape().size(), 2);
+    for (int n = 0; n < inp.shape()[0]; ++n) {
+        for (int m = 0; m < inp.shape()[1]; ++m) {
+            out->data()[Expand(n, out->shape()[1], m)] =
+                inp.data()[Expand(m, inp.shape()[1], n)];
+        }
+    }
+}
 /**
  * @description:
  * @param {type}  inp (n, c, h, w), out (n, c, h + 2 * padding, w + 2 * padding)

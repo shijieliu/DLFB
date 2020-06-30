@@ -1,7 +1,7 @@
 /*
  * @Author: liushijie
  * @Date: 2020-06-25 22:38:55
- * @LastEditTime: 2020-06-30 19:57:49
+ * @LastEditTime: 2020-06-30 21:39:26
  * @LastEditors: liushijie
  * @Description: 
  * @FilePath: /LightLR/include/dag/operator/softmax.h
@@ -49,6 +49,7 @@ class SoftmaxImpl : public OperatorNodeBase {
         Tensor *grad = grads[0];
         Tensor dot;
     }
+    
     Shape inferenceShape(const std::vector<const Tensor *> &inps) override {
         return inps[0]->shape();
     }

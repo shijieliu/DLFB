@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-06-20 07:17:31
- * @LastEditTime: 2020-06-30 19:43:59
+ * @LastEditTime: 2020-07-01 05:36:54
  * @LastEditors: liushijie
  * @Description: In User Settings Edit
  * @FilePath: /LightLR/example/test_graph.cpp
@@ -88,7 +88,7 @@ void test_layer() {
     dl::DisplayTensor(x2->tensor());
     LOG_INFO("create reduce mean");
     dl::DataNode *loss = dl::CreateNode<dl::ReduceMeanImpl>({x2});
-    auto          func = dl::Compile({loss});
+    auto          func = dl::Compile({image}, {loss});
 
     Tensor da(image->tensor()->shape());
     dl::Random(da.data(), da.size());
@@ -107,12 +107,12 @@ void test_layer() {
 }
 
 void test_conv2d_opr() {
-    int n           = 2; // error
+    int n           = 2; 
     int c_in        = 3;
     int height      = 10;
     int width       = 10;
     int kernel_size = 5;
-    int c_out       = 2; // error
+    int c_out       = 2; 
     int stride      = 2; 
     int padding     = 0;
 

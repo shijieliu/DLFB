@@ -1,7 +1,7 @@
 /*
  * @Author: liushijie
  * @Date: 2020-06-20 17:31:18
- * @LastEditTime: 2020-06-29 17:34:34
+ * @LastEditTime: 2020-07-01 05:40:50
  * @LastEditors: liushijie
  * @Description:
  * @FilePath: /LightLR/include/dag/operator/mul.h
@@ -16,16 +16,6 @@ class MatMulImpl final : public OperatorNodeBase {
     MatMulImpl(int uid)
         : OperatorNodeBase(uid) {}
     virtual ~MatMulImpl() = default;
-
-    void transpose(Tensor *inp){
-        CHECK_EQ(inp->shape().size(), 2);
-        Tensor cpy = *inp;
-        for(int n = 0; n < inp->shape()[0]; ++n){
-            for(int m = 0; m < inp->shape()[1]; ++m){
-                inp->data()[n, inp->shape()[0], m] = cpy.data()[Expand(m, inp->shape()[1], n)];
-            }
-        }
-    }
 
     void forward(const std::vector<const Tensor *> &inps,
                  Tensor *                           outs) override {
@@ -42,14 +32,14 @@ class MatMulImpl final : public OperatorNodeBase {
         }
 
         Mat(*x, *w, outs);
-        m_transpose_w = *w;
-        transpose(&m_transpose_w);
-        m_transpose_x = *x;
-        transpose(&m_transpose_x);
+        m_transpose_w.reshape({w->shape()[1], w->shape()[0]});
+        Transpose(*w, &m_transpose_w);
+        m_transpose_x.reshape({x->shape()[1], x->shape()[0]});
+        Transpose(*x, &m_transpose_x);
     }
 
     void backward(const Tensor *diff, std::vector<Tensor *> &grads) override {
-        // diff (n, dim) grad_x (n, m) grad_w (m, dim)
+        // diff (n, dim) grad_x (n, m) grad_w (m, dim) m_transpose_x (m, n) m_transpose_w (dim, m)
         Tensor *grad_x = grads[0];
         Tensor *grad_w = grads[1];
         Mat(m_transpose_x, *diff, grad_w);

@@ -25,8 +25,8 @@
 namespace dl {
 inline void Init() { Graph::GetInstance(); }
 
-inline Graph::GraphExecutor Compile(std::initializer_list<DataNode *> dst) {
+inline Graph::GraphExecutor Compile(std::initializer_list<DataNode *> src, std::initializer_list<DataNode *> dst) {
     Graph &graph = Graph::GetInstance();
-    return graph.compile(dst);
+    return graph.compile(src, dst);
 }
 }
