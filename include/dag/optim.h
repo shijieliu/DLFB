@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-06-20 07:06:22
- * @LastEditTime: 2020-06-30 15:28:09
+ * @LastEditTime: 2020-06-30 20:33:19
  * @LastEditors: liushijie
  * @Description: In User Settings Edit
  * @FilePath: /LightLR/include/dag/optim.h
@@ -16,7 +16,7 @@
 namespace dl {
 class Optimizer {
   public:
-    Optimizer(std::initializer_list<DataNode *> params_list);
+    Optimizer(const std::vector<DataNode *>& params_list);
     virtual ~Optimizer() = default;
     virtual void step() = 0;
     void zeroGrad();
@@ -25,7 +25,7 @@ class Optimizer {
     std::vector<DataNode *> mParams;
 };
 
-Optimizer::Optimizer(std::initializer_list<DataNode *> params_list)
+Optimizer::Optimizer(const std::vector<DataNode *>& params_list)
     : mParams(params_list.begin(), params_list.end()) {}
 
 void Optimizer::zeroGrad(){
@@ -36,7 +36,7 @@ void Optimizer::zeroGrad(){
 
 class SGD: public Optimizer{
   public:
-    SGD(std::initializer_list<DataNode *> params_list, float lr, float momentum, float weight_decay, bool nesterov);
+    SGD(const std::vector<DataNode *>& params_list, float lr, float momentum, float weight_decay, bool nesterov=false);
     virtual ~SGD() = default;
 
     virtual void step() override;
@@ -47,7 +47,7 @@ class SGD: public Optimizer{
     bool mNesterov;
 };
 
-SGD::SGD(std::initializer_list<DataNode *> params_list, float lr, float momentum, float weight_decay, bool nesterov) : Optimizer(params_list), mLr(lr), mMomentum(momentum), mWeightDecay(weight_decay), mNesterov(nesterov) {}
+SGD::SGD(const std::vector<DataNode *>& params_list, float lr, float momentum, float weight_decay, bool nesterov) : Optimizer(params_list), mLr(lr), mMomentum(momentum), mWeightDecay(weight_decay), mNesterov(nesterov) {}
 
 void SGD::step(){
   for(DataNode *node: mParams){

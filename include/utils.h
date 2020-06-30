@@ -1,7 +1,7 @@
 /*
  * @Author: liushijie
  * @Date: 2020-06-22 12:02:43
- * @LastEditTime: 2020-06-29 11:49:09
+ * @LastEditTime: 2020-06-30 20:58:16
  * @LastEditors: liushijie
  * @Description:
  * @FilePath: /LightLR/include/utils.h
@@ -12,40 +12,9 @@
 #pragma once
 #include <cstdlib>
 #include <string>
+#include <chrono>
 
 namespace dl {
-// using std::string;
-
-// template <typename T> T StringToNum(const string &str) {
-//     T                  num;
-//     std::istringstream iss(str);
-//     iss >> num;
-//     return num;
-// }
-
-// template <typename T> std::vector<T> split(string &str, const char deli =
-// '\t') {
-//     std::vector<T>     res;
-//     std::istringstream strstream(str);
-//     string             token;
-//     while (std::getline(strstream, token, deli)) {
-//         res.push_back(StringToNum<T>(token));
-//     }
-//     return res;
-// }
-
-/** bare-bones unique_ptr
- * this one deletes with delete [] */
-template <class T> struct ScopeDeleter {
-    const T *ptr;
-    explicit ScopeDeleter(const T *ptr = nullptr)
-        : ptr(ptr) {}
-    // void release () {ptr = nullptr; }
-    // void set (const T * ptr_in) { ptr = ptr_in; }
-    // void swap (ScopeDeleter<T> &other) {std::swap (ptr, other.ptr); }
-    ~ScopeDeleter() { delete[] ptr; }
-};
-
 std::string GetEnv(const char *env_var, const char *default_) {
     char *val = std::getenv(env_var);
     if (val == nullptr) {
@@ -62,4 +31,15 @@ static constexpr T Expand(T hd1, T hd2, Args... tl) {
     return hd1 + hd2 * Expand(tl...);
 }
 
+template <typename F, typename... Args>
+void Time(const char *str, F &&func, Args&& ... args) {
+    auto start = std::chrono::system_clock::now();
+    func(args...);
+    auto end = std::chrono::system_clock::now();
+    auto duration =
+        std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+    LOG_INFO("%s time spend: %f", str,
+             double(duration.count()) * std::chrono::microseconds::period::num /
+                 std::chrono::microseconds::period::den);
+}
 }

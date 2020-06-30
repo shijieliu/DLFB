@@ -1,7 +1,7 @@
 /*
  * @Author: liushijie
  * @Date: 2020-06-25 22:43:08
- * @LastEditTime: 2020-06-30 20:07:16
+ * @LastEditTime: 2020-06-30 20:38:31
  * @LastEditors: liushijie
  * @Description:
  * @FilePath: /LightLR/include/dag/operator/crossentropy.h
@@ -43,6 +43,7 @@ class CrossEntropyImpl : public OperatorNodeBase {
             grad_logits->data()[n * num_classes + static_cast<int>(mLabelIdx.data()[n])] = diff->data()[n];
         }
     }
+    
     Shape inferenceShape(const std::vector<const Tensor *> &inps) override {
         return Shape({inps[0]->shape()[0]});
     }

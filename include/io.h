@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-06-20 07:07:04
- * @LastEditTime: 2020-06-30 19:55:05
+ * @LastEditTime: 2020-06-30 20:59:28
  * @LastEditors: liushijie
  * @Description: In User Settings Edit
  * @FilePath: /LightLR/include/io.h
@@ -38,7 +38,6 @@ void ReadMnistImageData(const char *filename, Tensor *res) {
     n_images     = __builtin_bswap32(n_images);
     n_rows       = __builtin_bswap32(n_rows);
     n_cols       = __builtin_bswap32(n_cols);
-    n_images = 100;
     LOG_INFO("\n\timage data "
              "meta\n\t\tmagic_number:%d\n\t\tn_images:%d\n\t\tn_rows:%d\n\t\tn_cols:%d",
              magic_number, n_images, n_rows, n_cols);
@@ -69,7 +68,6 @@ void ReadMnistLabelData(const char *filename, Tensor *res) {
     fread(&n_images, sizeof(n_images), 1, stream);
     magic_number = __builtin_bswap32(magic_number);
     n_images     = __builtin_bswap32(n_images);
-    n_images = 100;
 
     LOG_INFO("\n\timage data meta\n\t\tmagic_number:%d\n\t\tn_images:%d",
              magic_number, n_images);

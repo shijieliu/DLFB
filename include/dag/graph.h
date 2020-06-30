@@ -59,7 +59,10 @@ class Graph {
         std::vector<OperatorNodeBase *> bck_nodes;
         ThreadPool &                    pool = ThreadPool::Instance();
     };
+    
     GraphExecutor compile(std::initializer_list<DataNode *> end_nodes_);
+
+    std::vector<DataNode*> params();
 
   private:
     using GraphRelationMap = std::unordered_multimap<int, int>;
@@ -191,6 +194,7 @@ DataNode *Graph::add(std::vector<DataNode *> &pre_nodes, Params... params) {
     mDataOprRelationGraph.insert(std::make_pair(end_node_uid, opr_node_uid));
     return mDataNodes[end_node_uid].get();
 }
+
 DataNode *Graph::add(const Shape &shape, bool is_data_provider) {
     int data_node_uid = mDataNodes.size();
     mDataNodes.insert(std::make_pair(
@@ -251,5 +255,14 @@ std::vector<OperatorNodeBase *>
     LOG_INFO("topological sort done!");
     return sort_res;
 }
+
+std::vector<DataNode*> Graph::params(){
+    std::vector<DataNode*> ret;
+    for(auto it = mDataNodes.begin(); it != mDataNodes.end(); ++it){
+        ret.push_back(it->second.get());
+    }
+    return ret;
+}
+
 
 } // namespace dl

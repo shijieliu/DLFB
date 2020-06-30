@@ -178,17 +178,16 @@ inline void Mat(const Tensor &lhs, const Tensor &rhs, Tensor *out) {
     CHECK_EQ(out->shape()[0], row);
     CHECK_EQ(out->shape()[1], col);
 
-    float *             transpose_rhs = new float[rhs.size()];
-    ScopeDeleter<float> delete_transpose_rhs(transpose_rhs);
+    Tensor transpose_rhs({col, len});
     for (int r = 0; r < len; ++r) {
         for (int c = 0; c < col; ++c) {
-            transpose_rhs[Expand(r, len, c)] = rhs.data()[Expand(c, col, r)];
+            transpose_rhs.data()[Expand(r, len, c)] = rhs.data()[Expand(c, col, r)];
         }
     }
     for (int r = 0; r < row; ++r) {
         for (int c = 0; c < col; ++c) {
             out->data()[r * col + c] = SIMD::AvxVecDotProduct(
-                lhs.data() + r * len, transpose_rhs + c * len, len);
+                lhs.data() + r * len, transpose_rhs.data() + c * len, len);
         }
     }
 }
