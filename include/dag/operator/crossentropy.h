@@ -1,7 +1,7 @@
 /*
  * @Author: liushijie
  * @Date: 2020-06-25 22:43:08
- * @LastEditTime: 2020-06-30 13:05:45
+ * @LastEditTime: 2020-06-30 20:07:16
  * @LastEditors: liushijie
  * @Description:
  * @FilePath: /LightLR/include/dag/operator/crossentropy.h
@@ -31,7 +31,7 @@ class CrossEntropyImpl : public OperatorNodeBase {
                 LOG_ERROR("idx %d out of range %d", idx, num_classes);
             }
             out->data()[n] =
-                logits->data()[n * num_classes + idx];
+                -std::log2(logits->data()[n * num_classes + idx] + 1e-12);
         }
         mLabelIdx = *labels;
     }

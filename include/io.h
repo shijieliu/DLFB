@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-06-20 07:07:04
- * @LastEditTime: 2020-06-30 17:22:13
+ * @LastEditTime: 2020-06-30 19:55:05
  * @LastEditors: liushijie
  * @Description: In User Settings Edit
  * @FilePath: /LightLR/include/io.h
@@ -50,7 +50,7 @@ void ReadMnistImageData(const char *filename, Tensor *res) {
     while (int ret = fread(buffer.data(), sizeof(uint8_t), n_rows * n_cols,
                               stream) > 0) {
         for (int i = 0; i < n_rows * n_cols; ++i) {
-            *(res->data() + offset + i) = static_cast<float>(buffer[i]);
+            res->data()[offset + i] = static_cast<float>(buffer[i]);
         }
         offset += ret;
     }
