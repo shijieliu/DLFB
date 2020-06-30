@@ -1,8 +1,23 @@
 cmake_minimum_required(VERSION 3.5)
 project(DL)
+find_package(Threads REQUIRED)
+find_package(CUDA 10.0 REQUIRED)
 
 set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} -ggdb -mavx -mssse3")
+
 
 include_directories(./include)
-add_executable(test_tensor example/test_tensor.cpp)
-add_executable(test_graph example/test_graph.cpp src/graph.cpp src/node.cpp)
+add_executable(test_socket example/test_net.cpp)
+add_executable(test_avx example/test_avx.cpp)
+add_executable(mnist example/mnist.cpp)
+add_executable(test_graph example/test_graph.cpp)
+# add_executable(test_threadpool example/test_threadpool.cpp)
+# add_executable(test_cuda example/test_cuda.cpp)
+
+target_link_libraries(mnist Threads::Threads)
+target_link_libraries(test_graph Threads::Threads)
+# target_link_libraries(test_threadpool Threads::Threads)
+
+# CUDA_ADD_LIBRARY(cudasupport src/cudalib.cu)
+# target_link_libraries(test_cuda cudasupport)

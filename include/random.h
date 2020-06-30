@@ -1,25 +1,29 @@
-//
-// Created by 刘仕杰 on 2020/3/8.
-//
+/*
+ * @Author: liushijie
+ * @Date: 2020-03-08 14:30:40
+ * @LastEditTime: 2020-06-23 15:21:01
+ * @LastEditors: liushijie
+ * @Description:
+ * @FilePath: /LightLR/include/random.h
+ */
+#pragma once
 
-#ifndef RANDOM_H
-#define RANDOM_H
-
-#include <random>
+#include "dag/tensor.h"
 #include <cstdio>
+#include <cstdlib>
+#include <ctime>
+#include <random>
 
 namespace dl {
-    static std::default_random_engine generator;
 
-    inline double uniform(double low, double high) {
-        std::uniform_real_distribution<double> uniform{low, high};
-        return uniform(generator);
-    }
-
-    inline double gussian(double mean, double var) {
-        std::normal_distribution<double> norm{mean, var};
-        return norm(generator);
-    }
+void Random(float *data, int64_t n, float low = 0, float high = 1) {
+    srand((unsigned) time(NULL));
+    std::transform(data, data + n, data, [&](float) {
+        return static_cast<float>(rand()) / RAND_MAX * (high - low) + low;
+    });
 }
 
-#endif //LIGHTLR_RANDOM_H
+void Ones(float *data, int64_t n) {
+    std::transform(data, data + n, data, [](float) { return 1.0; });
+}
+}

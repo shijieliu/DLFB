@@ -1,46 +1,131 @@
+/*
+ * @Author: your name
+ * @Date: 2020-06-20 07:07:04
+ * @LastEditTime: 2020-06-29 20:02:25
+ * @LastEditors: liushijie
+ * @Description: In User Settings Edit
+ * @FilePath: /LightLR/include/io.h
+ */
 //
 // Created by 刘仕杰 on 2020/2/2.
 //
-
-#ifndef LIGHTLR_IO_H
-#define LIGHTLR_IO_H
-
+#pragma once
 #include "utils.h"
+#include <algorithm>
+#include <cstdio>
+#include <cstdlib>
+#include <memory>
+#include <string.h>
 #include <vector>
-#include <fstream>
-#include <sstream>
 
 namespace dl {
-    template<typename T>
-    Tensor<T> ReadTensorFromFile(const string &filename) {
-        std::ifstream fs(filename);
-        string line;
-        std::vector<std::vector<T>> res;
-        int col = -1;
-        int row = 0;
-        while (std::getline(fs, line)) {
-            auto member = split<T>(line);
-            res.push_back(member);
-            row += 1;
-            col = (col == -1) ? member.size() : col;
+void ReadMnistImageData(const char *filename, Tensor *res) {
+    LOG_INFO("start reading mnist image data");
+    // read images
+    FILE *stream = fopen(filename, "rb");
+    if (stream == nullptr) {
+        LOG_ERROR("no file to read %s", filename);
+    }
+    uint32_t magic_number;
+    uint32_t n_images;
+    uint32_t n_rows;
+    uint32_t n_cols;
+    fread(&magic_number, sizeof(magic_number), 1, stream);
+    fread(&n_images, sizeof(n_images), 1, stream);
+    fread(&n_rows, sizeof(n_rows), 1, stream);
+    fread(&n_cols, sizeof(n_cols), 1, stream);
+    magic_number = __builtin_bswap32(magic_number);
+    n_images     = __builtin_bswap32(n_images);
+    n_rows       = __builtin_bswap32(n_rows);
+    n_cols       = __builtin_bswap32(n_cols);
+    LOG_INFO("\n\timage data "
+             "meta\n\t\tmagic_number:%d\n\t\tn_images:%d\n\t\tn_rows:%d\n\t\tn_cols:%d",
+             magic_number, n_images, n_rows, n_cols);
+    res->reshape({n_images, n_rows, n_cols});
+    std::vector<uint8_t> buffer(n_rows * n_cols, 0);
+    LOG_DEBUG("res size:%lu, buffer size:%lu", res->size(), buffer.size());
+
+    int64_t offset = 0;
+    while (int64_t ret = fread(buffer.data(), sizeof(uint8_t), n_rows * n_cols,
+                              stream) > 0) {
+        for (int64_t i = 0; i < n_rows * n_cols; ++i) {
+            *(res->data() + offset + i) = static_cast<float>(buffer[i]);
         }
-        printf("[io.h]datafile: %s, row: %d, col: %d\n", filename.c_str(), row, col);
-        return Tensor<T>(res, col, row);
+        offset += ret;
+    }
+    fclose(stream);
+}
+
+void ReadMnistLabelData(const char *filename, Tensor *res) {
+    // read images
+    FILE *stream = fopen(filename, "rb");
+    if (stream == nullptr) {
+        LOG_ERROR("no file to read %s", filename);
+    }
+    uint32_t magic_number;
+    uint32_t n_images;
+    fread(&magic_number, sizeof(magic_number), 1, stream);
+    fread(&n_images, sizeof(n_images), 1, stream);
+    magic_number = __builtin_bswap32(magic_number);
+    n_images     = __builtin_bswap32(n_images);
+    LOG_INFO("\n\timage data meta\n\t\tmagic_number:%d\n\t\tn_images:%d",
+             magic_number, n_images);
+    res->reshape({n_images});
+    std::vector<uint8_t> buffer(1024, 0);
+
+    int64_t offset = 0;
+    while (int64_t ret =
+               fread(buffer.data(), sizeof(uint8_t), 1024, stream) > 0) {
+        for (int64_t i = 0; i < ret; ++i) {
+            *(res->data() + offset + i) = static_cast<float>(buffer[i]);
+        }
+        offset += ret;
+    }
+    fclose(stream);
+}
+
+/**
+ * @description: 
+ * @param {type} shuffle the dataset: image (n, c, h, w), label(n)
+ * @return: 
+ */
+void Shuffle(Tensor* image, Tensor* label){
+    CHECK_EQ(image->shape()[0], label->shape()[0]);
+    int64_t n = image->shape()[0];
+    int offset = image->size() / n;
+    std::vector<int> idx;
+    for(int i = 0; i < n; ++i){
+        idx.push_back(i);
+    }
+    std::random_shuffle(idx.begin(), idx.end());
+    
+    Tensor image_copy = *image;
+    for(int i = 0; i < n; ++i){
+        memcpy(image->data() + offset * i, image_copy.data() + idx[i] * offset, sizeof(float) * offset);
     }
 
-    template<typename T>
-    Tensor<T> RandomTensor(const int row, const int col) {
-        std::default_random_engine generator;
-        std::uniform_int_distribution<int> distribution(1, 6);
-        std::vector<std::vector<T>> data;
-        for (int r = 0; r < row; ++r) {
-            std::vector<T> one_row;
-            for (int c = 0; c < col; ++c) {
-                one_row.push_back(static_cast<T>(distribution(generator)));
-            }
-            data.push_back(std::move(one_row));
-        }
-        return Tensor<T>(data, col, row);
+    Tensor label_copy = *image;
+    for(int i = 0; i < n; ++i){
+        image->data()[i] = image_copy.data()[idx[i]];
     }
 }
-#endif //LIGHTLR_IO_H
+
+void Split(const Tensor& image, const Tensor& label, int64_t batchsize, std::vector<Tensor>* batch_image, std::vector<Tensor>* batch_label){
+    CHECK_EQ(image.shape()[0], label.shape()[0]);
+    int64_t n = image.shape()[0];
+    int offset = image.size() / n;
+
+    for(int b = 0; (b + 1) * batchsize < n; ++b){
+        Tensor curr_image({batchsize, 1,image.shape()[1], image.shape()[2]});
+        curr_image.copyFrom(image.data() + b * batchsize * offset, image.data() + (b + 1) * batchsize * offset);
+        
+        Tensor curr_label({batchsize});
+        curr_label.copyFrom(label.data() + b * batchsize, label.data() + (b + 1) * batchsize);
+        LOG_INFO("batch label shape %s", FormatShape(curr_label.shape()).c_str());
+        
+        batch_image->push_back(std::move(curr_image));
+        batch_label->push_back(std::move(curr_label));
+    }
+}
+
+}
