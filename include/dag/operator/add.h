@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-06-20 07:05:48
- * @LastEditTime: 2020-06-30 13:45:27
+ * @LastEditTime: 2020-06-30 17:12:21
  * @LastEditors: liushijie
  * @Description: In User Settings Edit
  * @FilePath: /LightLR/include/dag/operator/add.h
@@ -16,7 +16,7 @@ namespace dl {
 
 class AddImpl final : public OperatorNodeBase {
   public:
-    AddImpl(int64_t uid)
+    AddImpl(int uid)
         : OperatorNodeBase(uid) {}
     virtual ~AddImpl() = default;
 
@@ -29,11 +29,11 @@ class AddImpl final : public OperatorNodeBase {
                 // t (c)
                 // outs (n, c, h, w)
                 Tensor expand_t(outs->shape());
-                for(int64_t n = 0; n < outs->shape()[0]; ++n){
-                    for(int64_t c = 0; c < outs->shape()[1]; ++c){
-                        for(int64_t h = 0; h < outs->shape()[2]; ++h){
-                            for(int64_t w = 0; w < outs->shape()[3]; ++w){
-                                expand_t.data()[expand(w, outs->shape()[3], h, outs->shape()[2], c, outs->shape()[1], n)] = t->data()[c];
+                for(int n = 0; n < outs->shape()[0]; ++n){
+                    for(int c = 0; c < outs->shape()[1]; ++c){
+                        for(int h = 0; h < outs->shape()[2]; ++h){
+                            for(int w = 0; w < outs->shape()[3]; ++w){
+                                expand_t.data()[Expand(w, outs->shape()[3], h, outs->shape()[2], c, outs->shape()[1], n)] = t->data()[c];
                             }
                         }
                     }

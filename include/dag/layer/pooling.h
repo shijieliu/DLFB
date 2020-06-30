@@ -13,28 +13,28 @@ namespace dl {
 namespace nn {
 class Pool2D : public LayerBase {
   public:
-    explicit Pool2D(int64_t kernel_size, int64_t stride, int64_t padding)
+    explicit Pool2D(int kernel_size, int stride, int padding)
         : mKernelSize(kernel_size)
         , mStride(stride)
         , mPadding(padding) {}
 
   protected:
-    int64_t mKernelSize;
-    int64_t mStride;
-    int64_t mPadding;
+    int mKernelSize;
+    int mStride;
+    int mPadding;
 };
 
 class Maxpool2d : public Pool2D {
   public:
-    explicit Maxpool2d(int64_t kernel_size, int64_t stride, int64_t padding)
+    explicit Maxpool2d(int kernel_size, int stride, int padding)
         : Pool2D(kernel_size, stride, padding) {
         LOG_INFO("\n\tMaxpool2d "
-                 "args:\n\t\tkernel_size:%lu\n\t\tstride:%lu\n\t\tpadding:%lu",
+                 "args:\n\t\tkernel_size:%d\n\t\tstride:%d\n\t\tpadding:%d",
                  kernel_size, stride, padding);
     }
 
     DataNode *operator()(DataNode *inp) {
-        DataNode *out = CreateNode<MaxPool2DImpl, int64_t, int64_t, int64_t>(
+        DataNode *out = CreateNode<MaxPool2DImpl, int, int, int>(
             {inp}, mKernelSize, mStride, mPadding);
         LOG_INFO("\n\tmaxpool2d input shape:%s\n\tmaxpool2d output shape:%s", FormatShape(inp->tensor()->shape()).c_str(), FormatShape(out->tensor()->shape()).c_str());
         return out;

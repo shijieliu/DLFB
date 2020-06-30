@@ -14,7 +14,7 @@
 namespace dl {
 class ReshapeImpl : public OperatorNodeBase {
   public:
-    ReshapeImpl(int64_t uid, const Shape &shape)
+    ReshapeImpl(int uid, const Shape &shape)
         : OperatorNodeBase(uid)
         , mOutShape(shape) {}
     virtual ~ReshapeImpl() = default;

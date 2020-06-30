@@ -55,11 +55,11 @@ std::string GetEnv(const char *env_var, const char *default_) {
     }
 }
 
-template <typename T> static constexpr T expand(T hd) { return hd; }
+template <typename T> static constexpr T Expand(T hd) { return hd; }
 
 template <typename T, typename... Args>
-static constexpr T expand(T hd1, T hd2, Args... tl) {
-    return hd1 + hd2 * expand(tl...);
+static constexpr T Expand(T hd1, T hd2, Args... tl) {
+    return hd1 + hd2 * Expand(tl...);
 }
 
 }

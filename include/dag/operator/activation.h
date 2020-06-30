@@ -16,7 +16,7 @@
 namespace dl {
 class ReLUImpl : public OperatorNodeBase {
   public:
-    ReLUImpl(int64_t uid)
+    ReLUImpl(int uid)
         : OperatorNodeBase(uid) {}
     virtual ~ReLUImpl() = default;
 
@@ -26,11 +26,11 @@ class ReLUImpl : public OperatorNodeBase {
         CHECK_EQ(inps.size(), 1);
         const Tensor *before_activation = inps[0];
         CHECK_EQ(before_activation->size(), outs->size());
-        std::vector<int64_t> index(outs->size());
+        std::vector<int> index(outs->size());
         std::iota(index.begin(), index.end(), 0);
 
         std::transform(index.begin(), index.end(), outs->data(),
-                       [&, this](int64_t idx) -> float {
+                       [&, this](int idx) -> float {
                            if (before_activation->data()[idx] > 0) {
                                mActivationIndex.insert(idx);
                                return before_activation->data()[idx];
@@ -43,11 +43,11 @@ class ReLUImpl : public OperatorNodeBase {
     void backward(const Tensor *diff, std::vector<Tensor *> &grads) override {
         CHECK_EQ(grads.size(), 1);
         Tensor *             delta = grads[0];
-        std::vector<int64_t> index(delta->size());
+        std::vector<int> index(delta->size());
         std::iota(index.begin(), index.end(), 0);
 
         std::transform(index.begin(), index.end(), delta->data(),
-                       [&](int64_t idx) -> float {
+                       [&](int idx) -> float {
                            if (mActivationIndex.find(idx) !=
                                mActivationIndex.end()) {
                                return diff->data()[idx];
@@ -62,6 +62,6 @@ class ReLUImpl : public OperatorNodeBase {
         return inps[0]->shape();
     }
 
-    std::unordered_set<int64_t> mActivationIndex;
+    std::unordered_set<int> mActivationIndex;
 };
 }

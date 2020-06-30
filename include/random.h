@@ -16,18 +16,18 @@
 
 namespace dl {
 
-void Random(float *data, int64_t n, float low = 0, float high = 1) {
+void Random(float *data, int n, float low = 0, float high = 1) {
     srand((unsigned) time(NULL));
     std::transform(data, data + n, data, [&](float) {
         return static_cast<float>(rand()) / RAND_MAX * (high - low) + low;
     });
 }
 
-void Ones(float *data, int64_t n) {
+void Ones(float *data, int n) {
     std::transform(data, data + n, data, [](float) ->float { return 1.0f; });
 }
 
-void Zeros(float *data, int64_t n){
+void Zeros(float *data, int n){
     std::transform(data, data + n, data, [](float) ->float { return 0.0f; });
 }
 }

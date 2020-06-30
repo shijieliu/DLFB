@@ -16,7 +16,7 @@
 // AVX Support
 namespace dl {
 namespace SIMD {
-inline void AvxVecAdd(const float *x, const float *y, float *res, int64_t len) {
+inline void AvxVecAdd(const float *x, const float *y, float *res, int len) {
     if (len > 7) {
         for (; len > 7; len -= 8) {
             __m256 t = _mm256_add_ps(_mm256_loadu_ps(x), _mm256_loadu_ps(y));
@@ -35,7 +35,7 @@ inline void AvxVecAdd(const float *x, const float *y, float *res, int64_t len) {
     }
 }
 
-inline void AvxVecSub(const float *x, const float *y, float *res, int64_t len) {
+inline void AvxVecSub(const float *x, const float *y, float *res, int len) {
     if (len > 7) {
         for (; len > 7; len -= 8) {
             __m256 t = _mm256_sub_ps(_mm256_loadu_ps(x), _mm256_loadu_ps(y));
@@ -55,7 +55,7 @@ inline void AvxVecSub(const float *x, const float *y, float *res, int64_t len) {
 }
 
 inline void AvxVecAdd(const float *x, const float delta_, float *res,
-                      int64_t len) {
+                      int len) {
     const __m256 delta = _mm256_broadcast_ss(&delta_);
     if (len > 7) {
         for (; len > 7; len -= 8) {
@@ -73,7 +73,7 @@ inline void AvxVecAdd(const float *x, const float delta_, float *res,
     }
 }
 
-inline void AvxVecMul(const float *x, const float *y, float *res, int64_t len) {
+inline void AvxVecMul(const float *x, const float *y, float *res, int len) {
     if (len > 7) {
         while (len > 7) {
             __m256 t = _mm256_mul_ps(_mm256_loadu_ps(x), _mm256_loadu_ps(y));
@@ -93,7 +93,7 @@ inline void AvxVecMul(const float *x, const float *y, float *res, int64_t len) {
     }
 }
 
-inline void AvxVecMul(const float *x, const float delta_, float *res, int64_t len){
+inline void AvxVecMul(const float *x, const float delta_, float *res, int len){
     const __m256 delta = _mm256_broadcast_ss(&delta_);
     if (len > 7) {
         for (; len > 7; len -= 8) {
@@ -111,7 +111,7 @@ inline void AvxVecMul(const float *x, const float delta_, float *res, int64_t le
     }
 }
 
-inline void AvxVecDiv(const float *x, const float *y, float *res, int64_t len) {
+inline void AvxVecDiv(const float *x, const float *y, float *res, int len) {
     if (len > 7) {
         for (; len > 7; len -= 8) {
             __m256 t = _mm256_div_ps(_mm256_loadu_ps(x), _mm256_loadu_ps(y));
@@ -137,7 +137,7 @@ inline float hsum256_ps_avx(__m256 v) {
     return _mm_cvtss_f32(x32);
 }
 
-inline float AvxVecDotProduct(const float *x, const float *y, int64_t len) {
+inline float AvxVecDotProduct(const float *x, const float *y, int len) {
     float result = 0;
     if (len > 7) {
         __m256 t = _mm256_setzero_ps();

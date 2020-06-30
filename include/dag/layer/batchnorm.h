@@ -15,7 +15,7 @@ namespace dl {
 namespace nn {
 class BatchNorm2D : public LayerBase {
   public:
-    BatchNorm2D(int64_t num_features, float eps = 1e-05, float momentum = 0.1,
+    BatchNorm2D(int num_features, float eps = 1e-05, float momentum = 0.1,
                 bool affine = true, bool track_running_stats = true)
         : mNumFeatures(num_features)
         , mEps(eps)
@@ -47,7 +47,7 @@ class BatchNorm2D : public LayerBase {
     }
 
   private:
-    int64_t    mNumFeatures;
+    int    mNumFeatures;
     float     mEps;
     float     mMonmentum;
     bool      mAffine;

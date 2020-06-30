@@ -17,7 +17,7 @@ namespace dl {
 
 class DataProviderImpl : public DataNode {
   public:
-    DataProviderImpl(const int64_t uid, const Shape &shape)
+    DataProviderImpl(const int uid, const Shape &shape)
         : DataNode(uid, shape, false) {}
     virtual ~DataProviderImpl() = default;
 };

@@ -12,7 +12,7 @@
 namespace dl {
 class BatchNormImpl : public OperatorNodeBase {
   public:
-    BatchNormImpl(int64_t uid, float eps, float momentum, bool track_running_stats)
+    BatchNormImpl(int uid, float eps, float momentum, bool track_running_stats)
         : OperatorNodeBase(uid)
         , mEps(eps)
         , mMomentum(momentum)

@@ -14,14 +14,14 @@ namespace nn {
 
 class Linear : public LayerBase {
   public:
-    explicit Linear(int64_t in_features, int64_t out_features, bool bias)
+    explicit Linear(int in_features, int out_features, bool bias)
         : mInFeatures(in_features)
         , mOutFeatures(out_features)
         , mBiasFlag(bias)
         , mWeights(nullptr)
         , mBias(nullptr) {
         mWeights = CreateNode({mInFeatures, mOutFeatures}, true);
-        LOG_INFO("\n\tlinear args:\n\t\tin_features:%lu\n\t\tout_features:%lu\n\t\tbias:%s", in_features, out_features, bias ? "true": "false");
+        LOG_INFO("\n\tlinear args:\n\t\tin_features:%d\n\t\tout_features:%d\n\t\tbias:%s", in_features, out_features, bias ? "true": "false");
         Random(mWeights->tensor()->data(), mWeights->tensor()->size());
         if (mBiasFlag) {
             mBias = CreateNode({mOutFeatures}, true);
@@ -39,8 +39,8 @@ class Linear : public LayerBase {
     }
 
   private:
-    int64_t    mInFeatures;
-    int64_t    mOutFeatures;
+    int    mInFeatures;
+    int    mOutFeatures;
     bool      mBiasFlag;
     DataNode *mWeights;
     DataNode *mBias;

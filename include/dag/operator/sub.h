@@ -11,7 +11,7 @@
 namespace dl {
 
 class SubImpl : public OperatorNodeBase {
-    SubImpl(const int64_t uid);
+    SubImpl(const int uid);
     virtual ~SubImpl();
 
     void forward(const std::vector<const Tensor *> &inps, Tensor *outs) {

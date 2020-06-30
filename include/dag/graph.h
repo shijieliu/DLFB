@@ -62,23 +62,23 @@ class Graph {
     GraphExecutor compile(std::initializer_list<DataNode *> end_nodes_);
 
   private:
-    using GraphRelationMap = std::unordered_multimap<int64_t, int64_t>;
+    using GraphRelationMap = std::unordered_multimap<int, int>;
     GraphRelationMap mGraph;
     GraphRelationMap mTransposeGraph;
-    std::unordered_map<int64_t, int64_t> mDataOprRelationGraph;
-    std::unordered_map<int64_t, std::unique_ptr<DataNode>> mDataNodes;
+    std::unordered_map<int, int> mDataOprRelationGraph;
+    std::unordered_map<int, std::unique_ptr<DataNode>> mDataNodes;
     std::vector<std::unique_ptr<OperatorNodeBase>> mOprNodes;
-    std::vector<int64_t>                           mDataProviders;
+    std::vector<int>                           mDataProviders;
     Graph();
 
     void transpose();
-    std::unordered_map<int64_t, int>
+    std::unordered_map<int, int>
         prepareTopologicalSort(const GraphRelationMap &graph,
-                               std::queue<int64_t> *   start_queue) const;
+                               std::queue<int> *   start_queue) const;
     std::vector<OperatorNodeBase *>
         topologicalSort(const GraphRelationMap &           graph,
                         const GraphRelationMap &           transpose_graph,
-                        const std::unordered_set<int64_t> &dst) const;
+                        const std::unordered_set<int> &dst) const;
 };
 
 template <typename Opr, typename... Params>
@@ -141,9 +141,9 @@ Graph::~Graph() = default;
 
 Graph::GraphExecutor
     Graph::compile(std::initializer_list<DataNode *> end_nodes_) {
-    std::unordered_set<int64_t> end_nodes;
+    std::unordered_set<int> end_nodes;
     for (auto end_node : end_nodes_) {
-        int64_t opr_node_uid = mDataOprRelationGraph[end_node->mUID];
+        int opr_node_uid = mDataOprRelationGraph[end_node->mUID];
         end_nodes.insert(opr_node_uid);
     }
     transpose();
@@ -153,21 +153,21 @@ Graph::GraphExecutor
 
 template <typename Opr, typename... Params>
 DataNode *Graph::add(std::vector<DataNode *> &pre_nodes, Params... params) {
-    int64_t opr_node_uid = mOprNodes.size();
+    int opr_node_uid = mOprNodes.size();
     mOprNodes.emplace_back(
         std::unique_ptr<Opr>(new Opr(opr_node_uid, params...)));
     auto &opr_node = mOprNodes.back();
     opr_node->setInNodes(pre_nodes.begin(), pre_nodes.end());
     for (auto pre_node : pre_nodes) {
         if (mDataNodes.find(pre_node->mUID) == mDataNodes.end()) {
-            LOG_ERROR("pre_node %zu not in graph", pre_node->mUID);
+            LOG_ERROR("pre_node %d not in graph", pre_node->mUID);
             assert(0);
         }
         auto pre_opr_it = mDataOprRelationGraph.find(pre_node->mUID);
         if (pre_opr_it == mDataOprRelationGraph.end()) {
             continue;
         }
-        int64_t pre_opr_node_uid   = pre_opr_it->second;
+        int pre_opr_node_uid   = pre_opr_it->second;
         auto    pre_opr_node_range = mGraph.equal_range(opr_node_uid);
         bool    has_inserted       = false;
         for (auto relation_it = pre_opr_node_range.first;
@@ -181,7 +181,7 @@ DataNode *Graph::add(std::vector<DataNode *> &pre_nodes, Params... params) {
             mGraph.insert(std::make_pair(opr_node_uid, pre_opr_node_uid));
         }
     }
-    int64_t end_node_uid = mDataNodes.size();
+    int end_node_uid = mDataNodes.size();
     mDataNodes.insert(std::make_pair(
         end_node_uid,
         std::unique_ptr<DataNode>(new DataNode(
@@ -192,7 +192,7 @@ DataNode *Graph::add(std::vector<DataNode *> &pre_nodes, Params... params) {
     return mDataNodes[end_node_uid].get();
 }
 DataNode *Graph::add(const Shape &shape, bool is_data_provider) {
-    int64_t data_node_uid = mDataNodes.size();
+    int data_node_uid = mDataNodes.size();
     mDataNodes.insert(std::make_pair(
         data_node_uid,
         std::unique_ptr<DataNode>(new DataNode(data_node_uid, shape, true))));
@@ -202,11 +202,11 @@ DataNode *Graph::add(const Shape &shape, bool is_data_provider) {
     return mDataNodes[data_node_uid].get();
 }
 
-std::unordered_map<int64_t, int>
+std::unordered_map<int, int>
     Graph::prepareTopologicalSort(const GraphRelationMap &graph,
-                                  std::queue<int64_t> *   start_queue) const {
-    std::unordered_map<int64_t, int> dist;
-    for (int64_t uid = 0; uid < mOprNodes.size(); ++uid) {
+                                  std::queue<int> *   start_queue) const {
+    std::unordered_map<int, int> dist;
+    for (int uid = 0; uid < mOprNodes.size(); ++uid) {
         if (graph.find(uid) == graph.end()) {
             start_queue->push(uid);
         }
@@ -218,19 +218,19 @@ std::unordered_map<int64_t, int>
 std::vector<OperatorNodeBase *>
     Graph::topologicalSort(const GraphRelationMap &           graph,
                            const GraphRelationMap &           transpose_graph,
-                           const std::unordered_set<int64_t> &dst) const {
-    std::queue<int64_t>             sort_queue;
+                           const std::unordered_set<int> &dst) const {
+    std::queue<int>             sort_queue;
     std::vector<OperatorNodeBase *> sort_res;
     sort_res.reserve(graph.size());
 
     // 1. calc in and out of nodes
-    std::unordered_map<int64_t, int> dist =
+    std::unordered_map<int, int> dist =
         prepareTopologicalSort(graph, &sort_queue);
 
     // 2. topological sort
 
     while (!sort_queue.empty()) {
-        int64_t current_uid     = sort_queue.front();
+        int current_uid     = sort_queue.front();
         auto *  current_opr_ptr = mOprNodes[current_uid].get();
         sort_res.push_back(current_opr_ptr);
         sort_queue.pop();
@@ -241,7 +241,7 @@ std::vector<OperatorNodeBase *>
         const auto next_opr_range = transpose_graph.equal_range(current_uid);
         for (auto next_opr_it = next_opr_range.first;
              next_opr_it != next_opr_range.second; ++next_opr_it) {
-            int64_t next_uid = next_opr_it->second;
+            int next_uid = next_opr_it->second;
             --dist[next_uid];
             if (dist[next_uid] == 0) {
                 sort_queue.push(next_uid);

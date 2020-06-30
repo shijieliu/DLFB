@@ -16,11 +16,11 @@ namespace dl {
 
 class NodeBase {
   public:
-    explicit NodeBase(int64_t uid_)
+    explicit NodeBase(int uid_)
         : mUID(uid_) {}
 
     virtual ~NodeBase() = default;
-    int64_t mUID;
+    int mUID;
 };
 
 enum DeviceType{
@@ -29,14 +29,14 @@ enum DeviceType{
 };
 class DataNode : public NodeBase {
   public:
-    DataNode(const int64_t uid, const Shape &shape, bool require_grad, DeviceType device_type=DeviceType::CPU)
+    DataNode(const int uid, const Shape &shape, bool require_grad, DeviceType device_type=DeviceType::CPU)
         : NodeBase(uid)
         , mTensor(std::make_shared<Tensor>(shape))
         , mGradient(std::make_shared<Tensor>(shape))
         , mRequireGrad(require_grad)
         , mDeviceType(device_type) {
-        LOG_DEBUG("tensor size %zu", mTensor->size());
-        LOG_DEBUG("gradient size %zu", mGradient->size());
+        LOG_DEBUG("tensor size %lu", mTensor->size());
+        LOG_DEBUG("gradient size %lu", mGradient->size());
     }
     virtual ~DataNode() { }
 
@@ -52,7 +52,7 @@ class DataNode : public NodeBase {
 
 class OperatorNodeBase : public NodeBase {
   public:
-    OperatorNodeBase(const int64_t uid)
+    OperatorNodeBase(const int uid)
         : NodeBase(uid)
         , mTrainFlag(true) {}
     virtual ~OperatorNodeBase() = default;

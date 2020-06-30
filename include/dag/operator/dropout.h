@@ -12,7 +12,7 @@
 namespace dl {
 class DropoutImpl final : public OperatorNodeBase {
   public:
-    DropoutImpl(int64_t uid, float p)
+    DropoutImpl(int uid, float p)
         : OperatorNodeBase(uid)
         , mP(p) {}
     virtual ~DropoutImpl() = default;
@@ -24,11 +24,11 @@ class DropoutImpl final : public OperatorNodeBase {
         CHECK_EQ(before_dropout->size(), outs->size());
         mDropoutIndex.clear();
         if (mTrainFlag) {
-            std::vector<int64_t> index(outs->size());
+            std::vector<int> index(outs->size());
             std::iota(index.begin(), index.end(), 0);
 
             std::transform(index.begin(), index.end(), outs->data(),
-                           [&](int64_t idx) -> float {
+                           [&](int idx) -> float {
                                if (static_cast<float>(rand()) / RAND_MAX <
                                    0.5) {
                                    mDropoutIndex.insert(idx);
@@ -47,11 +47,11 @@ class DropoutImpl final : public OperatorNodeBase {
     void backward(const Tensor *diff, std::vector<Tensor *> &grads) override {
         CHECK_EQ(grads.size(), 1);
         Tensor *            grad = grads[0];
-        std::vector<int64_t> index(grad->size());
+        std::vector<int> index(grad->size());
         std::iota(index.begin(), index.end(), 0);
 
         std::transform(index.begin(), index.end(), grad->data(),
-                       [&](int64_t idx) -> float {
+                       [&](int idx) -> float {
                            if (mDropoutIndex.find(idx) != mDropoutIndex.end()) {
                                return diff->data()[idx];
                            } else {
@@ -71,6 +71,6 @@ class DropoutImpl final : public OperatorNodeBase {
         return res;
     }
     float                      mP;
-    std::unordered_set<int64_t> mDropoutIndex;
+    std::unordered_set<int> mDropoutIndex;
 };
 }

@@ -13,16 +13,16 @@ namespace dl {
 
 class MatMulImpl final : public OperatorNodeBase {
   public:
-    MatMulImpl(int64_t uid)
+    MatMulImpl(int uid)
         : OperatorNodeBase(uid) {}
     virtual ~MatMulImpl() = default;
 
     void transpose(Tensor *inp){
         CHECK_EQ(inp->shape().size(), 2);
         Tensor cpy = *inp;
-        for(int64_t n = 0; n < inp->shape()[0]; ++n){
-            for(int64_t m = 0; m < inp->shape()[1]; ++m){
-                inp->data()[n, inp->shape()[0], m] = cpy.data()[expand(m, inp->shape()[1], n)];
+        for(int n = 0; n < inp->shape()[0]; ++n){
+            for(int m = 0; m < inp->shape()[1]; ++m){
+                inp->data()[n, inp->shape()[0], m] = cpy.data()[Expand(m, inp->shape()[1], n)];
             }
         }
     }
@@ -66,7 +66,7 @@ class MatMulImpl final : public OperatorNodeBase {
 
 class MulImpl final : public OperatorNodeBase {
   public:
-    MulImpl(int64_t uid)
+    MulImpl(int uid)
         : OperatorNodeBase(uid) {}
     virtual ~MulImpl() = default;
 
@@ -82,7 +82,7 @@ class MulImpl final : public OperatorNodeBase {
         }
     }
     void backward(const Tensor *diff, std::vector<Tensor *> &grads) override {
-        for (int64_t i = 0; i < grads.size(); ++i)
+        for (int i = 0; i < grads.size(); ++i)
             Mul(*diff, mMulActivation[i], grads[i]);
     }
 

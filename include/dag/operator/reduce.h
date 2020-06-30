@@ -14,7 +14,7 @@ enum ReduceType { Sum, Mean };
 
 template <ReduceType reduce> class ReduceOpImpl : public OperatorNodeBase {
   public:
-    ReduceOpImpl(int64_t uid)
+    ReduceOpImpl(int uid)
         : OperatorNodeBase(uid) {}
 
     ~ReduceOpImpl() = default;
@@ -35,7 +35,7 @@ template <ReduceType reduce> class ReduceOpImpl : public OperatorNodeBase {
         CHECK_EQ(grads.size(), 1);
         CHECK_EQ(diff->size(), 1);
         auto g = grads[0];
-        for (int64_t i = 0; i < g->size(); ++i) {
+        for (int i = 0; i < g->size(); ++i) {
             if (reduce == ReduceType::Mean) {
                 g->data()[i] = diff->data()[0] / g->size();
             }

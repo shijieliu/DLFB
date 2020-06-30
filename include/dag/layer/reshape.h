@@ -15,7 +15,7 @@ namespace nn {
 
 class Reshape : public LayerBase {
   public:
-    explicit Reshape(std::initializer_list<int64_t> shape)
+    explicit Reshape(std::initializer_list<int> shape)
         : mOutShape(shape.begin(), shape.end()) {
         LOG_INFO("\n\treshape args:\n\t\tout shape:%s", FormatShape(mOutShape).c_str());
     }

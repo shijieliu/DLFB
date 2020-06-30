@@ -15,11 +15,11 @@
 #include <vector>
 
 namespace dl {
-using Shape = std::vector<int64_t>;
+using Shape = std::vector<int>;
 
 std::string FormatShape(const Shape& shape){
     std::string res("(");
-    for(int64_t s : shape){
+    for(int s : shape){
         res += std::to_string(s);
         res += ",";
     }
@@ -30,7 +30,7 @@ class Tensor {
   public:
     Tensor() {}
     explicit Tensor(std::vector<float> &                 data,
-                    const std::initializer_list<int64_t> shape)
+                    const std::initializer_list<int> shape)
         : Tensor(data, Shape(shape.begin(), shape.end())) {}
 
     explicit Tensor(std::vector<float> &data, const Shape &shape) {
@@ -38,7 +38,7 @@ class Tensor {
         copyFrom(data.begin(), data.end());
     }
 
-    explicit Tensor(const std::initializer_list<int64_t> shape)
+    explicit Tensor(const std::initializer_list<int> shape)
         : Tensor(Shape(shape.begin(), shape.end())) {}
 
     explicit Tensor(const Shape &shape) {
@@ -79,7 +79,7 @@ class Tensor {
     void reshape(const Shape &shape) {
         mShape = shape;
         mSize  = 1;
-        for (int64_t s : shape) {
+        for (int s : shape) {
             mSize *= s;
         }
         mData.release();
@@ -88,13 +88,13 @@ class Tensor {
         memset((void *) mData.get(), 0, mSize * sizeof(float));
     }
 
-    void reshape(std::initializer_list<int64_t> shape) {
+    void reshape(std::initializer_list<int> shape) {
         reshape(Shape(shape.begin(), shape.end()));
     }
 
     const Shape &shape() const { return mShape; }
 
-    int64_t size() const { return mSize; }
+    size_t size() const { return mSize; }
 
     float *data() const { return mData.get(); }
 
@@ -105,7 +105,7 @@ class Tensor {
 
   private:
     Shape  mShape;
-    int64_t mSize  = 1;
+    size_t mSize  = 1;
     using Deleter = std::function<void(float *)>;
     std::unique_ptr<float, Deleter> mData;
     int32_t mDevice;
@@ -116,7 +116,7 @@ void DisplayTensor(const dl::Tensor* t, const std::string& tensor_name="Tensor")
     std::string shape_info = FormatShape(t->shape());
 
     std::string value_info("[");
-    for (int64_t i = 0; i < t->size(); ++i) {
+    for (int i = 0; i < t->size(); ++i) {
         value_info.append(std::to_string(t->data()[i]));
         if(i < 10){
             value_info.append(",");
@@ -173,21 +173,21 @@ inline void Mat(const Tensor &lhs, const Tensor &rhs, Tensor *out) {
     CHECK_EQ(lhs.shape().size(), 2);
     CHECK_EQ(lhs.shape()[1], rhs.shape()[0]);
 
-    int64_t row = lhs.shape()[0];
-    int64_t col = rhs.shape()[1];
-    int64_t len = lhs.shape()[1];
+    int row = lhs.shape()[0];
+    int col = rhs.shape()[1];
+    int len = lhs.shape()[1];
     CHECK_EQ(out->shape()[0], row);
     CHECK_EQ(out->shape()[1], col);
 
     float *             transpose_rhs = new float[rhs.size()];
     ScopeDeleter<float> delete_transpose_rhs(transpose_rhs);
-    for (int64_t r = 0; r < len; ++r) {
-        for (int64_t c = 0; c < col; ++c) {
-            transpose_rhs[expand(r, len, c)] = rhs.data()[expand(c, col, r)];
+    for (int r = 0; r < len; ++r) {
+        for (int c = 0; c < col; ++c) {
+            transpose_rhs[Expand(r, len, c)] = rhs.data()[Expand(c, col, r)];
         }
     }
-    for (int64_t r = 0; r < row; ++r) {
-        for (int64_t c = 0; c < col; ++c) {
+    for (int r = 0; r < row; ++r) {
+        for (int c = 0; c < col; ++c) {
             out->data()[r * col + c] = SIMD::AvxVecDotProduct(
                 lhs.data() + r * len, transpose_rhs + c * len, len);
         }
@@ -199,23 +199,23 @@ inline void Mat(const Tensor &lhs, const Tensor &rhs, Tensor *out) {
  * @param {type}  inp (n, c, h, w), out (n, c, h + 2 * padding, w + 2 * padding)
  * @return:
  */
-inline void Padding(const Tensor &inp, Tensor *out, int64_t padding,
+inline void Padding(const Tensor &inp, Tensor *out, int padding,
                     const char *padding_mode) {
-    int64_t n         = inp.shape()[0];
-    int64_t c         = inp.shape()[1];
-    int64_t h         = inp.shape()[2];
-    int64_t w         = inp.shape()[3];
-    int64_t padding_h = h + 2 * padding;
-    int64_t padding_w = w + 2 * padding;
+    int n         = inp.shape()[0];
+    int c         = inp.shape()[1];
+    int h         = inp.shape()[2];
+    int w         = inp.shape()[3];
+    int padding_h = h + 2 * padding;
+    int padding_w = w + 2 * padding;
     memset(out->data(), 0, sizeof(float) * out->size());
 
-    for (int64_t step_n = 0; step_n < n; ++step_n) {
-        for (int64_t step_c = 0; step_c < c; ++step_c) {
-            for (int64_t step_h = 0; step_h < h; ++step_h) {
-                memcpy(out->data() + expand(padding, padding_w,
+    for (int step_n = 0; step_n < n; ++step_n) {
+        for (int step_c = 0; step_c < c; ++step_c) {
+            for (int step_h = 0; step_h < h; ++step_h) {
+                memcpy(out->data() + Expand(padding, padding_w,
                                             padding + step_h, padding_h, step_c,
                                             c, step_n),
-                       inp.data() + expand(step_h, h, step_c, c, step_n),
+                       inp.data() + Expand(step_h, h, step_c, c, step_n),
                        sizeof(float) * w);
             }
         }
@@ -230,16 +230,16 @@ inline void Rotate(const Tensor &inp, Tensor *out) {
     CHECK_EQ(inp.shape().size(), 4);
     CHECK_EQ(inp.shape(), out->shape());
 
-    int64_t c_out = inp.shape()[0];
-    int64_t c_in  = inp.shape()[1];
-    int64_t k     = inp.shape()[2];
-    for (int64_t step_c_out = 0; step_c_out < c_out; ++step_c_out) {
-        for (int64_t step_c_in = 0; step_c_in < c_in; ++step_c_in) {
-            for (int64_t k1 = 0; k1 < k; ++k1) {
-                for (int64_t k2 = 0; k2 < k; ++k2) {
-                    out->data()[expand(k1, k, k2, k, step_c_in, c_in,
+    int c_out = inp.shape()[0];
+    int c_in  = inp.shape()[1];
+    int k     = inp.shape()[2];
+    for (int step_c_out = 0; step_c_out < c_out; ++step_c_out) {
+        for (int step_c_in = 0; step_c_in < c_in; ++step_c_in) {
+            for (int k1 = 0; k1 < k; ++k1) {
+                for (int k2 = 0; k2 < k; ++k2) {
+                    out->data()[Expand(k1, k, k2, k, step_c_in, c_in,
                                        step_c_out)] =
-                        inp.data()[expand(k2, k, k1, k, step_c_in, c_in,
+                        inp.data()[Expand(k2, k, k1, k, step_c_in, c_in,
                                           step_c_out)];
                 }
             }
@@ -253,23 +253,23 @@ inline void Rotate(const Tensor &inp, Tensor *out) {
  * @return:
  */
 inline void Conv2D(const Tensor &x, const Tensor &weight, Tensor *out,
-                   int64_t stride, int64_t padding,
+                   int stride, int padding,
                    const std::string &padding_mode) {
     CHECK_EQ(x.shape().size(), 4);
     CHECK_EQ(weight.shape().size(), 4);
-    LOG_DEBUG("\n\tTensor Conv2D args:\n\t\tx shape:(%lu, %lu, %lu, %lu)\n\t\tweight shape:(%lu, %lu, %lu, %lu)\n\t\tstride:%lu\n\t\tpadding:%lu", x.shape()[0], x.shape()[1], x.shape()[2], x.shape()[3], weight.shape()[0], weight.shape()[1], weight.shape()[2], weight.shape()[3], stride, padding);
+    LOG_DEBUG("\n\tTensor Conv2D args:\n\t\tx shape:(%d, %d, %d, %d)\n\t\tweight shape:(%d, %d, %d, %d)\n\t\tstride:%d\n\t\tpadding:%d", x.shape()[0], x.shape()[1], x.shape()[2], x.shape()[3], weight.shape()[0], weight.shape()[1], weight.shape()[2], weight.shape()[3], stride, padding);
 
     CHECK_EQ(x.shape()[1], weight.shape()[1]);
 
-    int64_t              c_out = weight.shape()[0];
-    int64_t              c_in  = weight.shape()[1];
-    int64_t              k     = weight.shape()[2];
-    int64_t              n     = x.shape()[0];
-    int64_t              h     = x.shape()[2];
-    int64_t              w     = x.shape()[3];
-    int64_t              h_out     = (h + 2 * padding - k) / stride + 1;
-    int64_t              w_out     = (w + 2 * padding - k) / stride + 1;
-    LOG_DEBUG("(h_out: %lu, w_out: %lu)", h_out, w_out);
+    int              c_out = weight.shape()[0];
+    int              c_in  = weight.shape()[1];
+    int              k     = weight.shape()[2];
+    int              n     = x.shape()[0];
+    int              h     = x.shape()[2];
+    int              w     = x.shape()[3];
+    int              h_out     = (h + 2 * padding - k) / stride + 1;
+    int              w_out     = (w + 2 * padding - k) / stride + 1;
+    LOG_DEBUG("(h_out: %d, w_out: %d)", h_out, w_out);
     CHECK_EQ(out->shape()[0], n);
     CHECK_EQ(out->shape()[1], c_out);
     CHECK_EQ(out->shape()[2], h_out);
@@ -295,16 +295,16 @@ inline void Conv2D(const Tensor &x, const Tensor &weight, Tensor *out,
     // build flatten_x
     {
 
-        for (int64_t n_step = 0; n_step < n; ++n_step) {
-            for (int64_t h_step = 0; h_step <= h - k; h_step += stride) {
-                for (int64_t w_step = 0; w_step <= w - k; w_step += stride) {
-                    for (int64_t c_step = 0; c_step < c_in; ++c_step) {
-                        for (int64_t k1_step = 0; k1_step < k; ++k1_step) {
-                            for (int64_t k2_step = 0; k2_step < k; ++k2_step) {
-                                int64_t offset_flatten_x = expand(
+        for (int n_step = 0; n_step < n; ++n_step) {
+            for (int h_step = 0; h_step <= h - k; h_step += stride) {
+                for (int w_step = 0; w_step <= w - k; w_step += stride) {
+                    for (int c_step = 0; c_step < c_in; ++c_step) {
+                        for (int k1_step = 0; k1_step < k; ++k1_step) {
+                            for (int k2_step = 0; k2_step < k; ++k2_step) {
+                                int offset_flatten_x = Expand(
                                     w_step, w - k + 1, h_step, h - k + 1,
                                     n_step, n, k2_step, k, k1_step, k, c_step);
-                                int64_t offset_x = expand(w_step + k2_step, w,
+                                int offset_x = Expand(w_step + k2_step, w,
                                                          h_step + k1_step, h,
                                                          c_step, c_in, n_step);
                                 *(flatten_x.data() + offset_flatten_x) =
@@ -322,10 +322,10 @@ inline void Conv2D(const Tensor &x, const Tensor &weight, Tensor *out,
     Tensor tmp_out({c_out, n * h_out * w_out});
     Mat(flatten_weight, flatten_x, &tmp_out);
 
-    for (int64_t c_step = 0; c_step < c_out; ++c_step) {
-        for (int64_t n_step = 0; n_step < n; ++n_step) {
-            memcpy(out->data() + expand(c_step, c_out, n_step),
-                   tmp_out.data() + expand(n_step, n, c_step),
+    for (int c_step = 0; c_step < c_out; ++c_step) {
+        for (int n_step = 0; n_step < n; ++n_step) {
+            memcpy(out->data() + Expand(c_step, c_out, n_step),
+                   tmp_out.data() + Expand(n_step, n, c_step),
                    sizeof(float) * (h - k + 1) * (w - k + 1));
         }
     }

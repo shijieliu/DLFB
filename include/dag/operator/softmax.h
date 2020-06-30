@@ -1,7 +1,7 @@
 /*
  * @Author: liushijie
  * @Date: 2020-06-25 22:38:55
- * @LastEditTime: 2020-06-30 11:36:35
+ * @LastEditTime: 2020-06-30 17:19:53
  * @LastEditors: liushijie
  * @Description: 
  * @FilePath: /LightLR/include/dag/operator/softmax.h
@@ -14,7 +14,7 @@
 namespace dl {
 class SoftmaxImpl : public OperatorNodeBase {
   public:
-    SoftmaxImpl(int64_t uid)
+    SoftmaxImpl(int uid)
         : OperatorNodeBase(uid) {}
 
     ~SoftmaxImpl() = default;
@@ -25,14 +25,14 @@ class SoftmaxImpl : public OperatorNodeBase {
             LOG_ERROR("invalid input size %lu", inps.size());
         }
         const Tensor *inp = inps[0];
-        int64_t row = inp->shape()[0];
-        int64_t col = inp->shape()[1];
+        int row = inp->shape()[0];
+        int col = inp->shape()[1];
         Tensor        sum_tensor(inp->shape());
         if(inp->shape().size() != 2){
             LOG_ERROR("invalid input shape %s", FormatShape(inp->shape()).c_str());
         }
         
-        for(int64_t n = 0; n < inp->shape()[0]; ++n){
+        for(int n = 0; n < inp->shape()[0]; ++n){
             float * inp_st = inp->data() + n * col;
             float *inp_ed = inp->data() + (n + 1) * col;
             float row_max_value = *std::max_element(inp_st, inp_ed);

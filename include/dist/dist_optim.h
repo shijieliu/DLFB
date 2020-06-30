@@ -20,8 +20,8 @@ class DistributedOptimizer : public Optimizer {
     }
 
   private:
-    int64_t     mRank;
-    int64_t     mWorldSize;
+    int     mRank;
+    int     mWorldSize;
     Optimizer *mOprimizer;
 };
 }

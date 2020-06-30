@@ -12,8 +12,8 @@
 namespace dl {
 class Conv2DImpl : public OperatorNodeBase {
   public:
-    Conv2DImpl(const int64_t uid, int64_t kernel_size, int64_t stride,
-               int64_t padding = 0, const char *paddingmode = "zeros")
+    Conv2DImpl(const int uid, int kernel_size, int stride,
+               int padding = 0, const char *paddingmode = "zeros")
         : OperatorNodeBase(uid)
         , mKernel(kernel_size)
         , mStride(stride)
@@ -54,9 +54,9 @@ class Conv2DImpl : public OperatorNodeBase {
              (x->shape()[3] + 2 * mPadding - w->shape()[3]) / mStride + 1});
     }
 
-    int64_t      mKernel;
-    int64_t      mStride;
-    int64_t      mPadding;
+    int      mKernel;
+    int      mStride;
+    int      mPadding;
     std::string mPaddingMode;
     Tensor      minp;
     Tensor      mWeight;

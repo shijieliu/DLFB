@@ -108,19 +108,19 @@ class Socket {
         }
     }
 
-    inline int64_t Send(const void *data, int64_t size, int flag = 0) {
+    inline int Send(const void *data, int size, int flag = 0) {
         const char *buf = reinterpret_cast<const char *>(data);
         return send(m_socket, buf, size, flag);
     }
 
-    inline int64_t SendAll(const void *data, int64_t len) {
+    inline int SendAll(const void *data, int len) {
         const char *buf   = reinterpret_cast<const char *>(data);
-        int64_t      ndown = 0;
-        LOG_DEBUG("sendall msg %s, len: %zu\n", buf, len);
+        int      ndown = 0;
+        LOG_DEBUG("sendall msg %s, len: %d\n", buf, len);
         while (ndown < len) {
-            int64_t ret = Send(buf, len - ndown);
+            int ret = Send(buf, len - ndown);
 
-            LOG_DEBUG("sendall msg down size %zu\n", ret);
+            LOG_DEBUG("sendall msg down size %d\n", ret);
             if (ret == -1) {
                 LOG_ERROR("Send msg wrong\n");
                 assert(0);
@@ -141,19 +141,19 @@ class Socket {
         assert(SendAll(data.c_str(), data.size()) == len);
     }
 
-    inline int64_t Recv(void *data, int64_t size, int flag = 0) {
+    inline int Recv(void *data, int size, int flag = 0) {
         char *buf = reinterpret_cast<char *>(data);
         return recv(m_socket, buf, size, flag);
     }
 
-    inline int64_t RecvAll(void *data, int64_t len) {
+    inline int RecvAll(void *data, int len) {
         char * buf   = reinterpret_cast<char *>(data);
-        int64_t ndown = 0;
+        int ndown = 0;
 
         LOG_DEBUG("recvall msg\n");
         while (ndown < len) {
-            int64_t ret = Recv(buf, len - ndown);
-            LOG_DEBUG("recv msg down size %zu\n", ret);
+            int ret = Recv(buf, len - ndown);
+            LOG_DEBUG("recv msg down size %d\n", ret);
             if (ret == -1) {
                 LOG_ERROR("Recv msg wrong\n");
                 assert(0);

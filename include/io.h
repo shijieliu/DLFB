@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-06-20 07:07:04
- * @LastEditTime: 2020-06-30 13:01:58
+ * @LastEditTime: 2020-06-30 17:22:13
  * @LastEditors: liushijie
  * @Description: In User Settings Edit
  * @FilePath: /LightLR/include/io.h
@@ -26,10 +26,10 @@ void ReadMnistImageData(const char *filename, Tensor *res) {
     if (stream == nullptr) {
         LOG_ERROR("no file to read %s", filename);
     }
-    uint32_t magic_number;
-    uint32_t n_images;
-    uint32_t n_rows;
-    uint32_t n_cols;
+    int32_t magic_number;
+    int32_t n_images;
+    int32_t n_rows;
+    int32_t n_cols;
     fread(&magic_number, sizeof(magic_number), 1, stream);
     fread(&n_images, sizeof(n_images), 1, stream);
     fread(&n_rows, sizeof(n_rows), 1, stream);
@@ -46,10 +46,10 @@ void ReadMnistImageData(const char *filename, Tensor *res) {
     std::vector<uint8_t> buffer(n_rows * n_cols, 0);
     LOG_DEBUG("res size:%lu, buffer size:%lu", res->size(), buffer.size());
 
-    int64_t offset = 0;
-    while (int64_t ret = fread(buffer.data(), sizeof(uint8_t), n_rows * n_cols,
+    int offset = 0;
+    while (int ret = fread(buffer.data(), sizeof(uint8_t), n_rows * n_cols,
                               stream) > 0) {
-        for (int64_t i = 0; i < n_rows * n_cols; ++i) {
+        for (int i = 0; i < n_rows * n_cols; ++i) {
             *(res->data() + offset + i) = static_cast<float>(buffer[i]);
         }
         offset += ret;
@@ -63,8 +63,8 @@ void ReadMnistLabelData(const char *filename, Tensor *res) {
     if (stream == nullptr) {
         LOG_ERROR("no file to read %s", filename);
     }
-    uint32_t magic_number;
-    uint32_t n_images;
+    int32_t magic_number;
+    int32_t n_images;
     fread(&magic_number, sizeof(magic_number), 1, stream);
     fread(&n_images, sizeof(n_images), 1, stream);
     magic_number = __builtin_bswap32(magic_number);
@@ -76,10 +76,10 @@ void ReadMnistLabelData(const char *filename, Tensor *res) {
     res->reshape({n_images});
     std::vector<uint8_t> buffer(1024, 0);
 
-    int64_t offset = 0;
-    while (int64_t ret =
+    int offset = 0;
+    while (int ret =
                fread(buffer.data(), sizeof(uint8_t), 1024, stream) > 0) {
-        for (int64_t i = 0; i < ret; ++i) {
+        for (int i = 0; i < ret; ++i) {
             *(res->data() + offset + i) = static_cast<float>(buffer[i]);
         }
         offset += ret;
@@ -94,7 +94,7 @@ void ReadMnistLabelData(const char *filename, Tensor *res) {
  */
 void Shuffle(Tensor* image, Tensor* label){
     CHECK_EQ(image->shape()[0], label->shape()[0]);
-    int64_t n = image->shape()[0];
+    int n = image->shape()[0];
     int offset = image->size() / n;
     std::vector<int> idx;
     for(int i = 0; i < n; ++i){
@@ -113,9 +113,9 @@ void Shuffle(Tensor* image, Tensor* label){
     }
 }
 
-void Split(const Tensor& image, const Tensor& label, int64_t batchsize, std::vector<Tensor>* batch_image, std::vector<Tensor>* batch_label){
+void Split(const Tensor& image, const Tensor& label, int batchsize, std::vector<Tensor>* batch_image, std::vector<Tensor>* batch_label){
     CHECK_EQ(image.shape()[0], label.shape()[0]);
-    int64_t n = image.shape()[0];
+    int n = image.shape()[0];
     int offset = image.size() / n;
 
     for(int b = 0; (b + 1) * batchsize < n; ++b){

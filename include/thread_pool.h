@@ -13,7 +13,7 @@ namespace dl {
 class ThreadPool {
 
   public:
-    explicit ThreadPool(int64_t num);
+    explicit ThreadPool(int num);
 
     ThreadPool() = delete;
 
@@ -40,7 +40,7 @@ class ThreadPool {
     std::condition_variable           _condition;
     std::queue<std::function<void()>> _queue;
     std::vector<std::thread>          _thread_pool;
-    int64_t                            _num;
+    int                            _num;
     bool                              stop;
 
     void init();
@@ -64,7 +64,7 @@ std::future<typename std::result_of<F(Args...)>::type>
     _condition.notify_one();
     return future;
 }
-ThreadPool::ThreadPool(int64_t num)
+ThreadPool::ThreadPool(int num)
     : _num(num) {
     init();
 }
@@ -88,7 +88,7 @@ void ThreadPool::wait() {
 
 void ThreadPool::init() {
     if (!_thread_pool.empty()) return;
-    for (int64_t i = 0; i < _num; ++i) {
+    for (int i = 0; i < _num; ++i) {
         _thread_pool.emplace_back([this, i]() {
             for (;;) {
                 std::function<void()> task;
