@@ -16,6 +16,7 @@
 #include "dag/layer/pooling.h"
 #include "dag/layer/reshape.h"
 #include "dag/layer/softmax.h"
+#include "dag/optim.h"
 #include "dag/node.h"
 #include "dag/tensor.h"
 #include "io.h"
@@ -24,7 +25,7 @@
 namespace dl {
 inline void Init() { Graph::GetInstance(); }
 
-inline GraphExecutor Compile(std::initializer_list<DataNode *> dst) {
+inline Graph::GraphExecutor Compile(std::initializer_list<DataNode *> dst) {
     Graph &graph = Graph::GetInstance();
     return graph.compile(dst);
 }

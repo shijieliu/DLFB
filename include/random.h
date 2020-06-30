@@ -1,7 +1,7 @@
 /*
  * @Author: liushijie
  * @Date: 2020-03-08 14:30:40
- * @LastEditTime: 2020-06-23 15:21:01
+ * @LastEditTime: 2020-06-30 14:56:23
  * @LastEditors: liushijie
  * @Description:
  * @FilePath: /LightLR/include/random.h
@@ -24,6 +24,10 @@ void Random(float *data, int64_t n, float low = 0, float high = 1) {
 }
 
 void Ones(float *data, int64_t n) {
-    std::transform(data, data + n, data, [](float) { return 1.0; });
+    std::transform(data, data + n, data, [](float) ->float { return 1.0f; });
+}
+
+void Zeros(float *data, int64_t n){
+    std::transform(data, data + n, data, [](float) ->float { return 0.0f; });
 }
 }

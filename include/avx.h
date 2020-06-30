@@ -54,9 +54,9 @@ inline void AvxVecSub(const float *x, const float *y, float *res, int64_t len) {
     }
 }
 
-inline void AvxVecAdd(const float *x, const float const_delta, float *res,
+inline void AvxVecAdd(const float *x, const float delta_, float *res,
                       int64_t len) {
-    const __m256 delta = _mm256_broadcast_ss(&const_delta);
+    const __m256 delta = _mm256_broadcast_ss(&delta_);
     if (len > 7) {
         for (; len > 7; len -= 8) {
             __m256 t = _mm256_add_ps(_mm256_loadu_ps(x), delta);
@@ -67,7 +67,7 @@ inline void AvxVecAdd(const float *x, const float const_delta, float *res,
     }
     // Don't forget the remaining values.
     for (; len > 0; len--) {
-        *res = *x + const_delta;
+        *res = *x + delta_;
         x++;
         res++;
     }
@@ -90,6 +90,24 @@ inline void AvxVecMul(const float *x, const float *y, float *res, int64_t len) {
         y++;
         res++;
         len--;
+    }
+}
+
+inline void AvxVecMul(const float *x, const float delta_, float *res, int64_t len){
+    const __m256 delta = _mm256_broadcast_ss(&delta_);
+    if (len > 7) {
+        for (; len > 7; len -= 8) {
+            __m256 t = _mm256_mul_ps(_mm256_loadu_ps(x), delta);
+            _mm256_storeu_ps(res, t);
+            x += 8;
+            res += 8;
+        }
+    }
+    // Don't forget the remaining values.
+    for (; len > 0; len--) {
+        *res = *x + delta_;
+        x++;
+        res++;
     }
 }
 

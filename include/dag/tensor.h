@@ -150,6 +150,13 @@ inline void Mul(const Tensor &lhs, const Tensor &rhs, Tensor *out) {
     SIMD::AvxVecMul(lhs.data(), rhs.data(), out->data(), out->size());
 }
 
+
+inline void Mul(const Tensor &lhs, const float rhs, Tensor *out) {
+    CHECK_EQ(out->shape(), lhs.shape());
+    SIMD::AvxVecMul(lhs.data(), rhs, out->data(), out->size());
+}
+
+
 inline void Div(const Tensor &lhs, const Tensor &rhs, Tensor *out) {
     CHECK_EQ(lhs.shape(), rhs.shape());
     CHECK_EQ(out->shape(), lhs.shape());

@@ -42,7 +42,7 @@ class DataNode : public NodeBase {
 
     Tensor* tensor() const { return mTensor.get();}
     Tensor* grad() const {return mGradient.get();}
-
+    bool requires_grad() const {return mRequireGrad;}
   protected:
     std::shared_ptr<Tensor> mTensor;
     std::shared_ptr<Tensor> mGradient;
