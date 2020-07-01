@@ -114,7 +114,6 @@ void Graph::GraphExecutor::forward(
     for (OperatorNodeBase *opr : fwd_nodes) {
         opr->applyForward();
     }
-    // pool.submit
 }
 
 void Graph::GraphExecutor::backward(

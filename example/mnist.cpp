@@ -1,7 +1,7 @@
 /*
  * @Author: liushijie
  * @Date: 2020-06-28 18:04:32
- * @LastEditTime: 2020-07-01 05:35:48
+ * @LastEditTime: 2020-07-01 15:07:41
  * @LastEditors: liushijie
  * @Description:
  * @FilePath: /LightLR/example/mnist.cpp
@@ -102,7 +102,6 @@ int main() {
                 dl::DisplayTensor(inner_node_pack.second->grad(),
                                   inner_node_pack.first + " grad ");
             }
-            assert(0);
         }
     }
 }

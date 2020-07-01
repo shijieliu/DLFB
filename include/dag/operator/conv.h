@@ -24,8 +24,7 @@ class Conv2DImpl : public OperatorNodeBase {
     void forward(const std::vector<const Tensor *> &inps,
                  Tensor *                           outs) override {
         CHECK_EQ(inps.size(), 2);
-        Conv2D(*inps[0], *inps[1], outs, mStride, mPadding, mPaddingMode);
-        minp  = *inps[0];
+        Conv2D(*inps[0], *inps[1], outs, &mFlattenInp, mStride, mPadding, mPaddingMode);
         mWeight = *inps[1];
     }
 
@@ -33,15 +32,28 @@ class Conv2DImpl : public OperatorNodeBase {
         CHECK_EQ(grads.size(), 2);
         Tensor *grad_x = grads[0];
         Tensor *grad_w = grads[1];
-        Conv2D(minp, *diff, grad_w, mStride, mPadding, mPaddingMode);
+        int ho = diff->shape()[2];
+        int wo = diff->shape()[3];
+        
+        Tensor transpose_diff({diff->shape()[1], diff->shape()[0] * diff->shape()[2] * diff->shape()[3]});
+        for(int n = 0; n < diff->shape()[0]; ++n){
+            for(int c = 0; c < diff->shape()[1]; ++c){
+                memcpy(transpose_diff.data() + Expand(c, diff->shape()[1], n) * ho * wo, diff->data() + Expand(n, diff->shape()[0], c) * ho * wo, sizeof(float) * ho * wo);
+            }
+        }
+        Tensor transpose_inp({mFlattenInp.shape()[1], mFlattenInp.shape()[0]});
+        Transpose(mFlattenInp, &transpose_inp);
+
+        Mat(transpose_diff, transpose_inp, grad_w);
+        
         Tensor padding_and_rotate_weight({mWeight.shape()[0],
                                           mWeight.shape()[1],
-                                          mWeight.shape()[2] + 2 * mPadding,
-                                          mWeight.shape()[3] + 2 * mPadding});
-        Padding(mWeight, &padding_and_rotate_weight, mPadding,
-                mPaddingMode.c_str());
-        Rotate(mWeight, &padding_and_rotate_weight);
-        Conv2D(mWeight, *diff, grad_x, mStride, mKernel - 1, "zeros");
+                                          mWeight.shape()[2] + 2 * (mKernel - 1),
+                                          mWeight.shape()[3] + 2 * (mKernel - 1)});
+        // Padding(mWeight, &padding_and_rotate_weight, mKernel - 1,
+                // mPaddingMode.c_str());
+        // Rotate(mWeight, &padding_and_rotate_weight);
+        // Conv2D(mWeight, *diff, grad_x, nullptr, mStride, mKernel - 1, "zeros");
     }
 
     Shape inferenceShape(const std::vector<const Tensor *> &inps) override {
@@ -58,7 +70,7 @@ class Conv2DImpl : public OperatorNodeBase {
     int      mStride;
     int      mPadding;
     std::string mPaddingMode;
-    Tensor      minp;
+    Tensor      mFlattenInp;
     Tensor      mWeight;
 };
 }

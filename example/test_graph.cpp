@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-06-20 07:17:31
- * @LastEditTime: 2020-07-01 05:36:54
+ * @LastEditTime: 2020-07-01 16:10:10
  * @LastEditors: liushijie
  * @Description: In User Settings Edit
  * @FilePath: /LightLR/example/test_graph.cpp
@@ -34,7 +34,7 @@ void test_conv2d() {
 
     Tensor out({2, 2, 1, 1});
 
-    dl::Conv2D(x, w, &out, 1, 0, "zeros");
+    dl::Conv2D(x, w, &out, nullptr, 1, 0, "zeros");
     dl::DisplayTensor(&out);
 }
 

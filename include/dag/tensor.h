@@ -175,8 +175,7 @@ inline void Mat(const Tensor &lhs, const Tensor &rhs, Tensor *out) {
     int row = lhs.shape()[0];
     int col = rhs.shape()[1];
     int len = lhs.shape()[1];
-    CHECK_EQ(out->shape()[0], row);
-    CHECK_EQ(out->shape()[1], col);
+    CHECK_EQ(out->size(), row * col);
 
     Tensor transpose_rhs({col, len});
     for (int r = 0; r < len; ++r) {
@@ -218,7 +217,6 @@ inline void Padding(const Tensor &inp, Tensor *out, int padding,
     int w         = inp.shape()[3];
     int padding_h = h + 2 * padding;
     int padding_w = w + 2 * padding;
-    memset(out->data(), 0, sizeof(float) * out->size());
 
     for (int step_n = 0; step_n < n; ++step_n) {
         for (int step_c = 0; step_c < c; ++step_c) {
@@ -226,7 +224,7 @@ inline void Padding(const Tensor &inp, Tensor *out, int padding,
                 memcpy(out->data() + Expand(padding, padding_w,
                                             padding + step_h, padding_h, step_c,
                                             c, step_n),
-                       inp.data() + Expand(step_h, h, step_c, c, step_n),
+                       inp.data() + Expand(step_h, h, step_c, c, step_n) * w,
                        sizeof(float) * w);
             }
         }
@@ -257,13 +255,14 @@ inline void Rotate(const Tensor &inp, Tensor *out) {
         }
     }
 }
+
 /**
  * @description:
  * @param {type} x (n, c_in, h, w), weight (c_out, c_in, k, k) out(n, c_out, h*,
  * w*)
  * @return:
  */
-inline void Conv2D(const Tensor &x, const Tensor &weight, Tensor *out,
+inline void Conv2D(const Tensor &x, const Tensor &weight, Tensor *out, Tensor *flatten_x,
                    int stride, int padding, const std::string &padding_mode) {
     CHECK_EQ(x.shape().size(), 4);
     CHECK_EQ(weight.shape().size(), 4);
@@ -290,23 +289,29 @@ inline void Conv2D(const Tensor &x, const Tensor &weight, Tensor *out,
     CHECK_EQ(out->shape()[2], h_out);
     CHECK_EQ(out->shape()[3], w_out);
 
-    Tensor padding_x;
+    std::unique_ptr<Tensor> ptr_x;
     if (padding > 0) {
         if (padding_mode == "zeros") {
             h += 2 * padding;
             w += 2 * padding;
-            padding_x.reshape({n, c_in, h, w});
-            Padding(x, &padding_x, padding, padding_mode.c_str());
+            ptr_x.reset(new Tensor({n, c_in, h, w}));
+            Padding(x, ptr_x.get(), padding, padding_mode.c_str());
         } else {
             LOG_ERROR("dont support padding mode %s", padding_mode.c_str());
             assert(0);
         }
     } else {
-        padding_x = x;
+        ptr_x.reset(new Tensor({n, c_in, h, w}));
+        ptr_x->copyFrom(x.data(), x.data() + x.size());
     }
-
-    Tensor flatten_x({c_in * k * k, n * h_out * w_out});
-
+    std::unique_ptr<Tensor> scope_delter;
+    if(flatten_x == nullptr){
+        scope_delter.reset(new Tensor({c_in * k * k, n * h_out * w_out}));
+        flatten_x = scope_delter.get();
+    }else{
+        flatten_x->reshape({c_in * k * k, n * h_out * w_out});
+    }
+    
     // build flatten_x
     {
 
@@ -323,8 +328,8 @@ inline void Conv2D(const Tensor &x, const Tensor &weight, Tensor *out,
                                     Expand(w_step * stride + k2_step, w,
                                            h_step * stride + k1_step, h, c_step,
                                            c_in, n_step);
-                                flatten_x.data()[offset_flatten_x] =
-                                    x.data()[offset_x];
+                                flatten_x->data()[offset_flatten_x] =
+                                    ptr_x->data()[offset_x];
                             }
                         }
                     }
@@ -336,7 +341,7 @@ inline void Conv2D(const Tensor &x, const Tensor &weight, Tensor *out,
     Tensor flatten_weight({c_out, c_in * k * k});
     flatten_weight.copyFrom(weight.data(), weight.data() + weight.size());
     Tensor tmp_out({c_out, n * h_out * w_out});
-    Mat(flatten_weight, flatten_x, &tmp_out);
+    Mat(flatten_weight, *flatten_x, &tmp_out);
 
     for (int c_step = 0; c_step < c_out; ++c_step) {
         for (int n_step = 0; n_step < n; ++n_step) {

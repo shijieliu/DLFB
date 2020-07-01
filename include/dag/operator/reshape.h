@@ -1,7 +1,7 @@
 /*
  * @Author: liushijie
  * @Date: 2020-06-29 14:42:18
- * @LastEditTime: 2020-06-29 17:33:46
+ * @LastEditTime: 2020-07-01 15:07:16
  * @LastEditors: liushijie
  * @Description:
  * @FilePath: /LightLR/include/dag/operator/reshape.h
@@ -28,7 +28,7 @@ class ReshapeImpl : public OperatorNodeBase {
     }
 
     void backward(const Tensor *diff, std::vector<Tensor *> &grads) override {
-        *(grads[0]) = *diff;
+        grads[0]->copyFrom(diff->data(), diff->data() + diff->size());
     }
 
     Shape inferenceShape(const std::vector<const Tensor *> &inps) override {

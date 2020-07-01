@@ -1,14 +1,11 @@
 /*
  * @Author: your name
- * @Date: 2020-06-20 07:06:22
- * @LastEditTime: 2020-06-30 20:33:19
+ * @Date: 2020-02-20 07:06:22
+ * @LastEditTime: 2020-07-01 18:16:30
  * @LastEditors: liushijie
  * @Description: In User Settings Edit
  * @FilePath: /LightLR/include/dag/optim.h
  */
-//
-// Created by 刘仕杰 on 2020/2/2.
-//
 #pragma once
 #include "dag/node.h"
 #include "random.h"
