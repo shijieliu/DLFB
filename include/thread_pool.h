@@ -4,6 +4,7 @@
 #pragma once
 
 #include "macro.h"
+#include "queue.h"
 #include <condition_variable>
 #include <future>
 #include <queue>
@@ -36,14 +37,10 @@ class ThreadPool {
     static ThreadPool &Instance();
 
   private:
-    std::mutex                        _mu;
-    std::condition_variable           _condition;
-    std::queue<std::function<void()>> _queue;
-    std::vector<std::thread>          _thread_pool;
-    int                            _num;
-    bool                              stop;
-
-    void init();
+    ThreadsafeQueue<std::function<void()>> _queue;
+    std::vector<std::thread>               _thread_pool;
+    int                                    _num;
+    void                                   init();
 };
 
 template <typename F, typename... Args>
@@ -56,12 +53,8 @@ std::future<typename std::result_of<F(Args...)>::type>
                   std::forward<Args>(args)...)); //使用 shared_ptr 来避免移动
 
     std::future<ret_typ> future = task->get_future();
-    {
-        std::unique_lock<std::mutex> lk(_mu);
-        _queue.emplace([task]() { (*task)(); });
-    }
+    _queue.push([task]() { (*task)(); });
 
-    _condition.notify_one();
     return future;
 }
 ThreadPool::ThreadPool(int num)
@@ -69,16 +62,10 @@ ThreadPool::ThreadPool(int num)
     init();
 }
 
-ThreadPool::~ThreadPool() {
-    wait();
-}
+ThreadPool::~ThreadPool() { wait(); }
 
 void ThreadPool::wait() {
-    {
-        std::unique_lock<std::mutex> lk(_mu);
-        stop = true;
-    }
-    _condition.notify_all();
+    _queue.close();
 
     for (auto &t : _thread_pool) {
         t.join();
@@ -92,15 +79,8 @@ void ThreadPool::init() {
         _thread_pool.emplace_back([this, i]() {
             for (;;) {
                 std::function<void()> task;
-                {
-                    std::unique_lock<std::mutex> lk(this->_mu);
-                    this->_condition.wait(lk, [this]() {
-                        return !this->_queue.empty() || this->stop;
-                    });
-                    if (this->stop && this->_queue.empty()) return;
-                    task = std::move(this->_queue.front());
-                    this->_queue.pop();
-                }
+                this->_queue.waitAndPop(&task);
+                if (!task) return;
                 task();
             }
         });
