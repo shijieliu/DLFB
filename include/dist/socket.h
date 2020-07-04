@@ -5,10 +5,13 @@
  * @Last Modified time: 2020-06-15 21:12:16
  */
 #pragma once
-
+#include "dist/message.h"
 #include "macro.h"
 #include <arpa/inet.h>
 #include <assert.h>
+#include <cstdint>
+#include <cstdio>
+#include <fcntl.h>
 #include <netdb.h>
 #include <netinet/in.h>
 #include <poll.h>
@@ -57,7 +60,6 @@ struct Addrinfo {
             return;
         }
         LOG_ERROR("can not obtain addr %s\n", host);
-        assert(0);
     }
 
     ~Addrinfo() {}
@@ -75,6 +77,13 @@ class Socket {
     inline int  Shutdown() { return shutdown(m_socket, SHUT_RDWR); }
     inline bool isvalid() { return m_socket == INVALID_SOCKET; }
 
+    inline bool SetSocketBlockingEnabled(bool blocking) {
+        int flags = fcntl(m_socket, F_GETFL, 0);
+        if (flags == -1) return false;
+        flags = blocking ? (flags & ~O_NONBLOCK) : (flags | O_NONBLOCK);
+        return (fcntl(m_socket, F_SETFL, flags) == 0) ? true : false;
+    }
+
     inline void Bind(const Addrinfo &addr) {
         LOG_INFO("bind to %s:%d\n", addr.m_addrinfoDetail.host,
                  addr.m_addrinfoDetail.port);
@@ -83,7 +92,6 @@ class Socket {
                        sizeof(addr.m_addr))) {
             LOG_ERROR("bind to %s:%d error\n", addr.m_addrinfoDetail.host,
                       addr.m_addrinfoDetail.port);
-            assert(0);
         }
     }
 
@@ -91,7 +99,6 @@ class Socket {
         LOG_INFO("listen\n");
         if (-1 == listen(m_socket, backlog)) {
             LOG_ERROR("listen error!\n");
-            assert(0);
         }
     }
 
@@ -104,7 +111,6 @@ class Socket {
             Close();
             LOG_ERROR("connect to %s:%d error\n", addr.m_addrinfoDetail.host,
                       addr.m_addrinfoDetail.port);
-            assert(0);
         }
     }
 
@@ -115,15 +121,12 @@ class Socket {
 
     inline int SendAll(const void *data, int len) {
         const char *buf   = reinterpret_cast<const char *>(data);
-        int      ndown = 0;
-        LOG_DEBUG("sendall msg %s, len: %d\n", buf, len);
+        int         ndown = 0;
         while (ndown < len) {
             int ret = Send(buf, len - ndown);
 
-            LOG_DEBUG("sendall msg down size %d\n", ret);
             if (ret == -1) {
                 LOG_ERROR("Send msg wrong\n");
-                assert(0);
             }
             if (ret == 0) {
                 return ndown;
@@ -131,14 +134,13 @@ class Socket {
             buf += ret;
             ndown += ret;
         }
-        LOG_DEBUG("sendall msg finish\n");
         return ndown;
     }
 
-    inline void SendStr(const std::string &data) {
-        int len = static_cast<int>(data.size());
+    inline void SendMessage(const Message &msg) {
+        int len = sizeof(msg);
         assert(SendAll(&len, sizeof(len)) == sizeof(len));
-        assert(SendAll(data.c_str(), data.size()) == len);
+        assert(SendAll(&msg, len) == len);
     }
 
     inline int Recv(void *data, int size, int flag = 0) {
@@ -147,16 +149,13 @@ class Socket {
     }
 
     inline int RecvAll(void *data, int len) {
-        char * buf   = reinterpret_cast<char *>(data);
-        int ndown = 0;
+        char *buf   = reinterpret_cast<char *>(data);
+        int   ndown = 0;
 
-        LOG_DEBUG("recvall msg\n");
         while (ndown < len) {
             int ret = Recv(buf, len - ndown);
-            LOG_DEBUG("recv msg down size %d\n", ret);
             if (ret == -1) {
                 LOG_ERROR("Recv msg wrong\n");
-                assert(0);
             }
             if (ret == 0) {
                 return ndown;
@@ -164,17 +163,14 @@ class Socket {
             buf += ret;
             ndown += ret;
         }
-        LOG_DEBUG("recvall msg finish\n");
         return ndown;
     }
 
-    inline void RecvStr(std::string *data) {
+    inline void RecvMessage(Message *msg) {
         int len;
         assert(RecvAll(&len, sizeof(len)) == sizeof(len));
-        LOG_DEBUG("recvstr reserve\n");
-        data->reserve(len);
-        LOG_DEBUG("recvstr reserve done\n");
-        assert(RecvAll(&(*data)[0], len) == len);
+        memset(msg, 0, len);
+        assert(RecvAll(msg, len) == len);
     }
 
     SOCKET m_socket;
@@ -196,9 +192,8 @@ class TcpSocket : public Socket {
         int on   = 1;
         if (0 != setsockopt(m_socket, SOL_SOCKET, SO_REUSEADDR, (char *) &on,
                             sizeof(on))) {
+            Close();            
             LOG_ERROR("setsocketopt reuseaddr wrong");
-            Close();
-            assert(0);
         }
     }
 
@@ -211,12 +206,9 @@ class TcpSocket : public Socket {
     }
 };
 
-class Poller {
-  private:
-    std::unordered_map<SOCKET, pollfd> pollfd_map;
-
+class PollHelper {
   public:
-    Poller()
+    PollHelper()
         : pollfd_map{} {}
     inline void AddRead(SOCKET socketfd) {
         pollfd _pollfd;
@@ -264,7 +256,7 @@ class Poller {
         }
         int ret = poll(fdset.data(), fdset.size(), timeout);
         if (ret == -1) {
-            fprintf(stderr, "[socket.h] poll ret -1");
+            LOG_ERROR("poll error");
         } else {
             for (auto &pfd : fdset) {
                 auto revents = pfd.revents & pfd.events;
@@ -276,6 +268,9 @@ class Poller {
             }
         }
     }
+
+  private:
+    std::unordered_map<SOCKET, pollfd> pollfd_map;
 };
 }
 
