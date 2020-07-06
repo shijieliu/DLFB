@@ -6,6 +6,7 @@
  */
 #pragma once
 
+#include <stdexcept>
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
@@ -52,7 +53,7 @@ static inline char *timenow();
 #define LOG_ERROR(message, args...)                                            \
     do {                                                                       \
         PRINTFUNCTION(LOG_FMT message NEWLINE, LOG_ARGS(ERROR_TAG), ##args);   \
-        exit(-1);                                                              \
+        throw std::runtime_error("runtime error");                             \
     } while (0)
 #else
 #define LOG_ERROR(message, args...)
