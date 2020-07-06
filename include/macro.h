@@ -10,6 +10,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
+#include <cuda.h>
+#include <cuda_runtime.h>
 // === auxiliar functions
 static inline char *timenow();
 
@@ -88,3 +90,13 @@ static inline char *timenow() {
 #define CHECK_GE(x, y) CHECK((x) >= (y))
 #define CHECK_EQ(x, y) CHECK((x) == (y))
 #define CHECK_NE(x, y) CHECK((x) != (y))
+
+#define gpuErrchk(ans) { gpuAssert((ans), __FILE__, __LINE__); }
+inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=true)
+{
+   if (code != cudaSuccess) 
+   {
+      fprintf(stderr,"GPUassert: %s %s %d\n", cudaGetErrorString(code), file, line);
+      if (abort) exit(code);
+   }
+}

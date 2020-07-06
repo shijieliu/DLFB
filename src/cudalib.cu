@@ -1,14 +1,20 @@
+/*
+ * @Author: liushijie
+ * @Date: 2020-07-06 18:02:03
+ * @LastEditTime: 2020-07-06 18:48:50
+ * @LastEditors: liushijie
+ * @Description: 
+ * @FilePath: /LightLR/src/cudalib.cu
+ */ 
 #include <cuda_runtime.h>
 #include "cuda/cudalib.h"
+#include "macro.h"
 
 namespace dl {
 namespace cuda {
 __global__ void CudaAddKernal(float *x, float *y, float *res, int len) {
-    int thread_id = threadIdx.x;
-    int block_id  = blockIdx.x;
-
-    int begin_idx   = block_id * BLOCK_SIZE + thread_id;
-    int read_offset = GRID_SIZE * BLOCK_SIZE;
+    int begin_idx   = blockIdx.x * blockDim.x + threadIdx.x;
+    int read_offset = blockDim.x * gridDim.x;
     for (int i = begin_idx; i < len; i += read_offset) {
         res[i] = x[i] + y[i];
     }
@@ -16,18 +22,17 @@ __global__ void CudaAddKernal(float *x, float *y, float *res, int len) {
 
 void CudaAdd(const float *x, const float *y, float *res, int len) {
     float *devx, *devy, *dev_res;
-    cudaMalloc((void **)&devx, sizeof(float) * len);
-    cudaMalloc((void **)&devy, sizeof(float) * len);
-    cudaMalloc((void **)&dev_res, sizeof(float) * len);
+    gpuErrchk(cudaMalloc((void **)&devx, sizeof(float) * len));
+    gpuErrchk(cudaMalloc((void **)&devy, sizeof(float) * len));
+    gpuErrchk(cudaMalloc((void **)&dev_res, sizeof(float) * len));
 
-    cudaMemcpy(devx, x, sizeof(float) * len, cudaMemcpyHostToDevice);
-    cudaMemcpy(devy, y, sizeof(float) * len, cudaMemcpyHostToDevice);
-    CudaAddKernal<<<GRID_SIZE, BLOCK_SIZE>>>(devx, devy, dev_res, len);
-    cudaMemcpy(res, dev_res, sizeof(float) * len, cudaMemcpyDeviceToHost);
-
-    cudaFree(devx);
-    cudaFree(devy);
-    cudaFree(dev_res);
+    gpuErrchk(cudaMemcpy(devx, x, sizeof(float) * len, cudaMemcpyHostToDevice));
+    gpuErrchk(cudaMemcpy(devy, y, sizeof(float) * len, cudaMemcpyHostToDevice));
+    CudaAddKernal<<<BLOCK_SIZE, GRID_SIZE>>>(devx, devy, dev_res, len);
+    gpuErrchk(cudaMemcpy(res, dev_res, sizeof(float) * len, cudaMemcpyDeviceToHost));
+    gpuErrchk(cudaFree(devx));
+    gpuErrchk(cudaFree(devy));
+    gpuErrchk(cudaFree(dev_res));
 }
 
 // __global__ void conv_cuda(double *out, const double *filter, int K, int C, int FW, int FH,
