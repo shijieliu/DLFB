@@ -1,7 +1,7 @@
 /*
  * @Author: liushijie
  * @Date: 2020-06-22 12:02:43
- * @LastEditTime: 2020-06-30 20:58:16
+ * @LastEditTime: 2020-07-04 21:15:36
  * @LastEditors: liushijie
  * @Description:
  * @FilePath: /LightLR/include/utils.h
@@ -15,15 +15,7 @@
 #include <chrono>
 
 namespace dl {
-std::string GetEnv(const char *env_var, const char *default_) {
-    char *val = std::getenv(env_var);
-    if (val == nullptr) {
-        return default_;
-    } else {
-        return val;
-    }
-}
-
+    
 template <typename T> static constexpr T Expand(T hd) { return hd; }
 
 template <typename T, typename... Args>

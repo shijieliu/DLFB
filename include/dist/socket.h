@@ -26,6 +26,7 @@
 
 namespace dl {
 namespace dist {
+
 using SOCKET                = int;
 const SOCKET INVALID_SOCKET = -1;
 
@@ -65,6 +66,7 @@ struct Addrinfo {
     ~Addrinfo() {}
 };
 
+
 class Socket {
   public:
     Socket()
@@ -75,7 +77,7 @@ class Socket {
     inline int Close() { return close(m_socket); }
 
     inline int  Shutdown() { return shutdown(m_socket, SHUT_RDWR); }
-    inline bool isvalid() { return m_socket == INVALID_SOCKET; }
+    inline bool isinvalid() { return m_socket == INVALID_SOCKET; }
 
     inline bool SetSocketBlockingEnabled(bool blocking) {
         int flags = fcntl(m_socket, F_GETFL, 0);

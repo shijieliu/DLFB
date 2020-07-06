@@ -1,7 +1,7 @@
 /*
  * @Author: liushijie
  * @Date: 2020-07-04 16:30:33
- * @LastEditTime: 2020-07-04 17:01:18
+ * @LastEditTime: 2020-07-06 17:10:22
  * @LastEditors: liushijie
  * @Description:
  * @FilePath: /LightLR/include/queue.h
@@ -24,8 +24,10 @@ template <typename T> class ThreadsafeQueue {
     ~ThreadsafeQueue() {}
 
     void push(T new_value) {
-        std::unique_lock<std::mutex> lk(mu_);
-        queue_.push(std::move(new_value));
+        {
+            std::lock_guard<std::mutex> lk(mu_);
+            queue_.push(std::move(new_value));
+        }
         cond_.notify_all();
     }
 
@@ -35,11 +37,14 @@ template <typename T> class ThreadsafeQueue {
         if (stop_ && queue_.empty()) return;
         *value = std::move(queue_.front());
         queue_.pop();
+        lk.unlock();
     }
 
     void close() {
-        std::unique_lock<std::mutex> lk(mu_);
-        stop_ = true;
+        {
+            std::lock_guard<std::mutex> lk(mu_);    
+            stop_ = true;
+        }
         cond_.notify_all();
     }
 

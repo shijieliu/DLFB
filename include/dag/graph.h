@@ -65,6 +65,7 @@ class Graph {
 
     std::vector<DataNode *> params();
 
+    DataNode *getParam(int uid);
   private:
     using GraphRelationMap = std::unordered_multimap<int, int>;
     GraphRelationMap mGraph;
@@ -262,6 +263,13 @@ std::vector<DataNode *> Graph::params() {
         ret.push_back(it->second.get());
     }
     return ret;
+}
+
+DataNode *Graph::getParam(int uid){
+    if(mDataNodes.find(uid) == mDataNodes.end()){
+        LOG_ERROR("no uid:%d in graph", uid);
+    }
+    return mDataNodes.find(uid)->second.get();
 }
 
 } // namespace dl
