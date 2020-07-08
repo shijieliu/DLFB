@@ -13,6 +13,7 @@
 #include <vector>
 
 namespace dl {
+enum DeviceType { CPU, GPU };
 
 class NodeBase {
   public:
@@ -33,11 +34,12 @@ class DataNode : public NodeBase {
         LOG_DEBUG("tensor size %lu", mTensor->size());
         LOG_DEBUG("gradient size %lu", mGradient->size());
     }
-    virtual ~DataNode() { }
+    virtual ~DataNode() {}
 
-    Tensor* tensor() const { return mTensor.get();}
-    Tensor* grad() const {return mGradient.get();}
-    bool requires_grad() const {return mRequireGrad;}
+    Tensor *tensor() const { return mTensor.get(); }
+    Tensor *grad() const { return mGradient.get(); }
+    bool    requires_grad() const { return mRequireGrad; }
+
   protected:
     std::shared_ptr<Tensor> mTensor;
     std::shared_ptr<Tensor> mGradient;
@@ -48,20 +50,33 @@ class OperatorNodeBase : public NodeBase {
   public:
     OperatorNodeBase(const int uid)
         : NodeBase(uid)
-        , mTrainFlag(true) {}
+        , mTrainFlag(true)
+        , mDeviceType(DeviceType::CPU) {}
     virtual ~OperatorNodeBase() = default;
 
     virtual void forward(const std::vector<const Tensor *> &inps,
                          Tensor *                           outs) = 0;
     virtual void backward(const Tensor *diff, std::vector<Tensor *> &grads) = 0;
+    virtual void gpuForward(const std::vector<const Tensor *> &inps,
+                            Tensor *                           outs) {
+        forward(inps, outs);
+    }
+    virtual void gpuBackward(const Tensor *diff, std::vector<Tensor *> &grads) {
+        backward(diff, grads);
+    }
     virtual Shape inferenceShape(const std::vector<const Tensor *> &inps) = 0;
 
     void applyForward() {
         std::vector<const Tensor *> forward_inps(mInNodes.size());
         std::transform(mInNodes.begin(), mInNodes.end(), forward_inps.begin(),
                        [](const DataNode *n) { return n->tensor(); });
-
-        forward(forward_inps, mOutNodes->tensor());
+        if (mDeviceType == DeviceType::CPU) {
+            forward(forward_inps, mOutNodes->tensor());
+        } else if (mDeviceType == DeviceType::GPU) {
+            gpuForward(forward_inps, mOutNodes->tensor());
+        }else{
+            LOG_ERROR("dont support device type %d", mDeviceType);
+        }
     }
 
     void applyBackward() {
@@ -69,7 +84,11 @@ class OperatorNodeBase : public NodeBase {
         std::transform(mInNodes.begin(), mInNodes.end(),
                        backward_outputs.begin(),
                        [](DataNode *n) { return n->grad(); });
-        backward(mOutNodes->grad(), backward_outputs);
+        if(mDeviceType == DeviceType::CPU){
+            backward(mOutNodes->grad(), backward_outputs);
+        }else if(mDeviceType == DeviceType::GPU){
+            gpuBackward(mOutNodes->grad(), backward_outputs);
+        }
     }
 
     Shape applyInferenceShape() {
@@ -100,10 +119,15 @@ class OperatorNodeBase : public NodeBase {
 
     void eval() { mTrainFlag = false; }
 
+    void cpu() { mDeviceType = DeviceType::CPU; }
+
+    void cuda() { mDeviceType = DeviceType::GPU; }
+
   protected:
     std::vector<DataNode *> mInNodes;
     DataNode *              mOutNodes;
     bool                    mTrainFlag;
+    DeviceType              mDeviceType;
 };
 
 } // namespace dl

@@ -64,8 +64,8 @@ class Conv2DImpl : public OperatorNodeBase {
         // "zeros");
     }
 
-    void gpuForward(const std::vector<const Tensor *> &inps, Tensor *outs);
-    
+    void gpuForward(const std::vector<const Tensor *> &inps, Tensor *outs) override;
+
     Shape inferenceShape(const std::vector<const Tensor *> &inps) override {
         const Tensor *x = inps[0]; // (n, c_in, h, w)
         const Tensor *w = inps[1]; // (c_out, c_in, k, k)

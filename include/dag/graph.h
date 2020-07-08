@@ -55,6 +55,18 @@ class Graph {
             }
         }
 
+        inline void cpu(){
+            for (auto &opr_node_ptr : fwd_nodes) {
+                opr_node_ptr->cpu();
+            }
+        }
+
+        inline void cuda(){
+            for (auto &opr_node_ptr : fwd_nodes) {
+                opr_node_ptr->cuda();
+            }
+        }
+
         std::vector<OperatorNodeBase *> fwd_nodes;
         std::vector<OperatorNodeBase *> bck_nodes;
         ThreadPool &                    pool = ThreadPool::Instance();
@@ -66,6 +78,7 @@ class Graph {
     std::vector<DataNode *> params();
 
     DataNode *getParam(int uid);
+
   private:
     using GraphRelationMap = std::unordered_multimap<int, int>;
     GraphRelationMap mGraph;
@@ -148,12 +161,13 @@ Graph::GraphExecutor
                    std::initializer_list<DataNode *> end_nodes_) {
     std::unordered_set<int> start_nodes;
     std::unordered_set<int> end_nodes;
-    std::transform(start_nodes_.begin(), start_nodes_.end(),
-                   std::inserter(start_nodes, start_nodes.begin()), [this](DataNode *node) {
-                       return mDataOprRelationGraph[node->mUID];
-                   });
     std::transform(
-        end_nodes_.begin(), end_nodes_.end(), std::inserter(end_nodes, end_nodes.begin()),
+        start_nodes_.begin(), start_nodes_.end(),
+        std::inserter(start_nodes, start_nodes.begin()),
+        [this](DataNode *node) { return mDataOprRelationGraph[node->mUID]; });
+    std::transform(
+        end_nodes_.begin(), end_nodes_.end(),
+        std::inserter(end_nodes, end_nodes.begin()),
         [this](DataNode *node) { return mDataOprRelationGraph[node->mUID]; });
     transpose();
     return GraphExecutor(
@@ -231,7 +245,7 @@ std::vector<OperatorNodeBase *>
     prepareTopologicalSort(graph, &dist);
 
     // 2. topological sort
-    for(int uid : src){
+    for (int uid : src) {
         sort_queue.push(uid);
     }
     while (!sort_queue.empty()) {
@@ -265,8 +279,8 @@ std::vector<DataNode *> Graph::params() {
     return ret;
 }
 
-DataNode *Graph::getParam(int uid){
-    if(mDataNodes.find(uid) == mDataNodes.end()){
+DataNode *Graph::getParam(int uid) {
+    if (mDataNodes.find(uid) == mDataNodes.end()) {
         LOG_ERROR("no uid:%d in graph", uid);
     }
     return mDataNodes.find(uid)->second.get();
