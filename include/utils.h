@@ -1,7 +1,7 @@
 /*
  * @Author: liushijie
  * @Date: 2020-06-22 12:02:43
- * @LastEditTime: 2020-07-04 21:15:36
+ * @LastEditTime: 2020-07-08 11:34:47
  * @LastEditors: liushijie
  * @Description:
  * @FilePath: /LightLR/include/utils.h
@@ -16,11 +16,11 @@
 
 namespace dl {
     
-template <typename T> static constexpr T Expand(T hd) { return hd; }
+template <typename T> static constexpr int Expand(T hd) { return static_cast<int>(hd); }
 
-template <typename T, typename... Args>
-static constexpr T Expand(T hd1, T hd2, Args... tl) {
-    return hd1 + hd2 * Expand(tl...);
+template <typename T, typename U, typename... Args>
+static constexpr int Expand(T hd1, U hd2, Args... tl) {
+    return static_cast<int>(hd1) + static_cast<int>(hd2) * Expand(tl...);
 }
 
 template <typename F, typename... Args>

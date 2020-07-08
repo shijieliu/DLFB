@@ -17,7 +17,7 @@
 namespace dl {
 using Shape = std::vector<int>;
 
-std::string FormatShape(const Shape &shape) {
+static std::string FormatShape(const Shape &shape) {
     std::string res("(");
     for (int s : shape) {
         res += std::to_string(s);
@@ -26,6 +26,8 @@ std::string FormatShape(const Shape &shape) {
     res += ")";
     return res;
 }
+
+
 class Tensor {
   public:
     Tensor() {}
@@ -108,10 +110,9 @@ class Tensor {
     size_t mSize  = 1;
     using Deleter = std::function<void(float *)>;
     std::unique_ptr<float, Deleter> mData;
-    int32_t mDevice;
 };
 
-void DisplayTensor(const dl::Tensor * t,
+static void DisplayTensor(const dl::Tensor * t,
                    const std::string &tensor_name = "Tensor") {
     std::string shape_info = FormatShape(t->shape());
 

@@ -23,18 +23,13 @@ class NodeBase {
     int mUID;
 };
 
-enum DeviceType{
-    CPU,
-    GPU
-};
 class DataNode : public NodeBase {
   public:
-    DataNode(const int uid, const Shape &shape, bool require_grad, DeviceType device_type=DeviceType::CPU)
+    DataNode(const int uid, const Shape &shape, bool require_grad)
         : NodeBase(uid)
         , mTensor(std::make_shared<Tensor>(shape))
         , mGradient(std::make_shared<Tensor>(shape))
-        , mRequireGrad(require_grad)
-        , mDeviceType(device_type) {
+        , mRequireGrad(require_grad) {
         LOG_DEBUG("tensor size %lu", mTensor->size());
         LOG_DEBUG("gradient size %lu", mGradient->size());
     }
@@ -47,7 +42,6 @@ class DataNode : public NodeBase {
     std::shared_ptr<Tensor> mTensor;
     std::shared_ptr<Tensor> mGradient;
     bool                    mRequireGrad;
-    DeviceType mDeviceType;
 };
 
 class OperatorNodeBase : public NodeBase {

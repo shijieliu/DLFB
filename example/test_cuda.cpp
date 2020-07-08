@@ -1,35 +1,38 @@
 /*
  * @Author: liushijie
  * @Date: 2020-06-28 15:25:14
- * @LastEditTime: 2020-06-28 15:26:22
+ * @LastEditTime: 2020-07-08 13:46:18
  * @LastEditors: liushijie
- * @Description: 
+ * @Description:
  * @FilePath: /LightLR/example/test_cuda.cpp
- */ 
-#include "cuda/cudalib.h"
+ */
+#include "cuda/cuda_add.h"
+#include "cuda/cuda_conv.h"
 #include "macro.h"
+#include "random.h"
 #include <algorithm>
 #include <vector>
 using std::vector;
+using dl::Tensor;
 
-int main() {
-    int           n = 10;
-    vector<float> data1;
-    data1.reserve(n);
-    vector<float> data2;
-    data2.reserve(n);
+void test_add() {
+    int        n = 10;
+    dl::Tensor data1({n});
+    dl::Tensor data2({n});
+    dl::Ones(data2.data(), 10);
 
     for (int i = 0; i < n; ++i) {
-        data1[i] = i;
-        data2[i] = 1;
+        data1.data()[i] = i;
     }
+    dl::Tensor res({n});
 
-    vector<float> res;
-    res.reserve(n);
-
-    dl::cuda::CudaAdd(data1.data(), data2.data(), res.data(), res.size());
+    dl::cuda::CudaAdd(data1, data2, &res);
     for (int i = 0; i < n; ++i) {
-        CHECK_EQ(res[i], i + 1);
+        CHECK_NE(std::abs(res.data()[i] - i - 1), 1e-5);
     }
     LOG_INFO("cuda add pass");
+}
+
+int main() {
+    test_add();
 }

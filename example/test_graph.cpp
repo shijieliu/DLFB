@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-06-20 07:17:31
- * @LastEditTime: 2020-07-01 16:10:10
+ * @LastEditTime: 2020-07-08 13:44:19
  * @LastEditors: liushijie
  * @Description: In User Settings Edit
  * @FilePath: /LightLR/example/test_graph.cpp
@@ -113,7 +113,7 @@ void test_conv2d_opr() {
     int width       = 10;
     int kernel_size = 5;
     int c_out       = 2; 
-    int stride      = 2; 
+    int stride      = 1; 
     int padding     = 0;
 
     std::unique_ptr<Tensor> inp(new Tensor({n, c_in, height, width}));
@@ -127,9 +127,12 @@ void test_conv2d_opr() {
     std::vector<const Tensor *> tensor_and_weight({inp.get(), weight.get()});
     std::unique_ptr<Tensor>     out(
         new Tensor(opr.inferenceShape(tensor_and_weight)));
-
+    std::unique_ptr<Tensor>     gpu_out(
+        new Tensor(opr.inferenceShape(tensor_and_weight)));
+    
     opr.forward(tensor_and_weight, out.get());
-
+    opr.gpuForward(tensor_and_weight, gpu_out.get());
+    
     for (int _n = 0; _n < out->shape()[0]; ++_n) {
         for (int _c = 0; _c < out->shape()[1]; ++_c) {
             for (int _h = 0; _h < out->shape()[2]; ++_h) {
@@ -153,7 +156,10 @@ void test_conv2d_opr() {
                         }
                     }
                     if(value - out->data()[offset] > 1e-5){
-                        LOG_ERROR("offset %d bf value:%f, conv value:%f", offset, value, out->data()[offset]);
+                        LOG_ERROR("cpu out offset %d bf value:%f, conv value:%f", offset, value, out->data()[offset]);
+                    }
+                    if(value - gpu_out->data()[offset] > 1e-5){
+                        LOG_ERROR("gpu out offset %d bf value:%f, conv value:%f", offset, value, gpu_out->data()[offset]);
                     }
                 }
             }
