@@ -1,7 +1,7 @@
 /*
  * @Author: liushijie
  * @Date: 2020-06-28 18:04:32
- * @LastEditTime: 2020-07-01 15:07:41
+ * @LastEditTime: 2020-07-08 16:51:08
  * @LastEditors: liushijie
  * @Description:
  * @FilePath: /LightLR/example/mnist.cpp
@@ -68,7 +68,7 @@ int main() {
     build_network(&image, &label, &loss, &inner_nodes);
 
     auto loss_func = dl::Compile({image, label}, {loss});
-
+    loss_func.cuda();
     std::unique_ptr<dl::Optimizer> optimizer(new dl::SGD(
         dl::Graph::GetInstance().params(), lr, momentum, weight_decay));
     vector<dl::Tensor> batch_imgs;

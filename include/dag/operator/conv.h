@@ -7,8 +7,9 @@
 
 #pragma once
 
-#include "dag/node.h"
+#include "cuda/cuda_mul.h"
 #include "cuda/cuda_conv.h"
+#include "dag/node.h"
 
 namespace dl {
 class Conv2DImpl : public OperatorNodeBase {
@@ -25,8 +26,17 @@ class Conv2DImpl : public OperatorNodeBase {
     void forward(const std::vector<const Tensor *> &inps,
                  Tensor *                           outs) override {
         CHECK_EQ(inps.size(), 2);
-        Conv2D(*inps[0], *inps[1], outs, &mFlattenInp, mStride, mPadding,
-               mPaddingMode);
+        CHECK_EQ(mDeviceType == DeviceType::CPU ||
+                     mDeviceType == DeviceType::GPU,
+                 1);
+        if (mDeviceType == DeviceType::GPU) {
+            cuda::CudaConv2D(*inps[0], *inps[1], outs, &mFlattenInp, mStride,
+                             mPadding, mPaddingMode);
+
+        } else {
+            Conv2D(*inps[0], *inps[1], outs, &mFlattenInp, mStride, mPadding,
+                   mPaddingMode);
+        }
         mWeight = *inps[1];
     }
 
@@ -50,8 +60,11 @@ class Conv2DImpl : public OperatorNodeBase {
         }
         Tensor transpose_inp({mFlattenInp.shape()[1], mFlattenInp.shape()[0]});
         Transpose(mFlattenInp, &transpose_inp);
-
-        Mat(transpose_diff, transpose_inp, grad_w);
+        if(mDeviceType == DeviceType::GPU){
+            cuda::CudaMat(transpose_diff, transpose_inp, grad_w);
+        }else{
+            Mat(transpose_diff, transpose_inp, grad_w);
+        }
 
         Tensor padding_and_rotate_weight(
             {mWeight.shape()[0], mWeight.shape()[1],
@@ -63,8 +76,6 @@ class Conv2DImpl : public OperatorNodeBase {
         // Conv2D(mWeight, *diff, grad_x, nullptr, mStride, mKernel - 1,
         // "zeros");
     }
-
-    void gpuForward(const std::vector<const Tensor *> &inps, Tensor *outs) override;
 
     Shape inferenceShape(const std::vector<const Tensor *> &inps) override {
         const Tensor *x = inps[0]; // (n, c_in, h, w)
@@ -85,12 +96,4 @@ class Conv2DImpl : public OperatorNodeBase {
     Tensor      mFlattenInp;
     Tensor      mWeight;
 };
-
-void Conv2DImpl::gpuForward(const std::vector<const Tensor *> &inps, Tensor *outs){
-    CHECK_EQ(inps.size(), 2);
-    cuda::CudaConv2D(*inps[0], *inps[1], outs, &mFlattenInp, mStride, mPadding,
-            mPaddingMode);
-    mWeight = *inps[1];
-}
-
 }

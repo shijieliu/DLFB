@@ -1,3 +1,12 @@
+/*
+ * @Author: liushijie
+ * @Date: 2020-07-04 19:45:52
+ * @LastEditTime: 2020-07-04 20:43:09
+ * @LastEditors: liushijie
+ * @Description: 
+ * @FilePath: /LightLR/example/test_net.cpp
+ */ 
+#include "dist/message.h"
 #include "dist/socket.h"
 #include <chrono>
 #include <cstring>
@@ -15,9 +24,9 @@ void start_server(const char *ip, const char *port) {
     for (;;) {
         LOG_INFO("recving msg\n");
 
-        std::string tmp{};
-        current_socket.RecvStr(&tmp);
-        LOG_INFO("recv: %s\n", tmp.c_str());
+        dl::Message tmp;
+        current_socket.RecvMessage(&tmp);
+        LOG_INFO("recv: %d\n", tmp.control);
     }
 }
 
@@ -30,7 +39,8 @@ void start_client(const char *ip, const char *port) {
 
     for (;;) {
         LOG_INFO("sending msg\n");
-        tcpSocket.SendStr("hello world");
+        dl::Message tmp;
+        tcpSocket.SendMessage(tmp);
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }
 }

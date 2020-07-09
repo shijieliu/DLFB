@@ -26,9 +26,9 @@ void CudaAdd(const Tensor &x, const Tensor &y, Tensor *res) {
 
     int    len = x.size();
     float *devx, *devy, *dev_res;
-    gpuErrchk(cudaMalloc((void **) &devx, sizeof(float) * len));
-    gpuErrchk(cudaMalloc((void **) &devy, sizeof(float) * len));
-    gpuErrchk(cudaMalloc((void **) &dev_res, sizeof(float) * len));
+    gpuErrchk(cudaMalloc( &devx, sizeof(float) * len));
+    gpuErrchk(cudaMalloc( &devy, sizeof(float) * len));
+    gpuErrchk(cudaMalloc( &dev_res, sizeof(float) * len));
 
     gpuErrchk(cudaMemcpy(devx, x.data(), sizeof(float) * len,
                          cudaMemcpyHostToDevice));

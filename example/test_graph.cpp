@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-06-20 07:17:31
- * @LastEditTime: 2020-07-08 13:44:19
+ * @LastEditTime: 2020-07-09 20:21:32
  * @LastEditors: liushijie
  * @Description: In User Settings Edit
  * @FilePath: /LightLR/example/test_graph.cpp
@@ -107,12 +107,12 @@ void test_layer() {
 }
 
 void test_conv2d_opr() {
-    int n           = 2; 
-    int c_in        = 3;
-    int height      = 10;
-    int width       = 10;
-    int kernel_size = 5;
-    int c_out       = 2; 
+    int n           = 1; 
+    int c_in        = 256;
+    int height      = 128;
+    int width       = 128;
+    int kernel_size = 3;
+    int c_out       = 128; 
     int stride      = 1; 
     int padding     = 0;
 
@@ -130,9 +130,42 @@ void test_conv2d_opr() {
     std::unique_ptr<Tensor>     gpu_out(
         new Tensor(opr.inferenceShape(tensor_and_weight)));
     
-    opr.forward(tensor_and_weight, out.get());
-    opr.gpuForward(tensor_and_weight, gpu_out.get());
+    dl::Time("cpu forward", [&](){
+        opr.forward(tensor_and_weight, out.get());
+    });
+    dl::Time("gpu forward", [&](){
+        opr.cuda();
+        opr.forward(tensor_and_weight, gpu_out.get());
+    });
     
+    dl::Time("cpu bf forward", [&](){
+        for (int _n = 0; _n < out->shape()[0]; ++_n) {
+        for (int _c = 0; _c < out->shape()[1]; ++_c) {
+            for (int _h = 0; _h < out->shape()[2]; ++_h) {
+                for (int _w = 0; _w < out->shape()[3]; ++_w) {
+                    float value = 0.0f;
+
+                    int offset =
+                        dl::Expand(_w, out->shape()[3], _h, out->shape()[2], _c,
+                                   out->shape()[1], _n);
+                    for (int _cin = 0; _cin < c_in; ++_cin) {
+                        for (int k1 = 0; k1 < kernel_size; ++k1) {
+                            for (int k2 = 0; k2 < kernel_size; ++k2) {
+                                value += inp->data()[dl::Expand(
+                                             k1 + _w * stride, width,
+                                             k2 + _h * stride, height, _cin,
+                                             c_in, _n)] *
+                                         weight->data()[dl::Expand(
+                                             k1, kernel_size, k2, kernel_size,
+                                             _cin, c_in, _c)];
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    });
     for (int _n = 0; _n < out->shape()[0]; ++_n) {
         for (int _c = 0; _c < out->shape()[1]; ++_c) {
             for (int _h = 0; _h < out->shape()[2]; ++_h) {

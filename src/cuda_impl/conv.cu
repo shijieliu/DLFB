@@ -1,7 +1,7 @@
 /*
  * @Author: liushijie
  * @Date: 2020-07-08 11:10:20
- * @LastEditTime: 2020-07-08 13:43:45
+ * @LastEditTime: 2020-07-09 19:04:11
  * @LastEditors: liushijie
  * @Description:
  * @FilePath: /LightLR/src/cuda_impl/conv.cu
@@ -24,10 +24,11 @@ __global__ void CudaConv2DKernal(float *x, float *weight, float *res, int h,
 
     int out_idx = Expand(threadIdx.x, w_out, threadIdx.y, h_out, blockIdx.x,
                          c_out, blockIdx.y);
+    float sum = 0.0f;
     for (int k1 = 0; k1 < kernel_size; ++k1) {
         for (int k2 = 0; k2 < kernel_size; ++k2) {
             for (int c = 0; c < c_in; ++c) {
-                res[out_idx] += weight[Expand(k1, kernel_size, k2, kernel_size,
+                sum += weight[Expand(k1, kernel_size, k2, kernel_size,
                                               c, c_in, blockIdx.x)] *
                                 x[Expand(threadIdx.x * stride + k1, w,
                                          threadIdx.y * stride + k2, h, c, c_in,
@@ -35,6 +36,7 @@ __global__ void CudaConv2DKernal(float *x, float *weight, float *res, int h,
             }
         }
     }
+    res[out_idx] = sum;
 }
 
 void CudaConv2D(const Tensor &x, const Tensor &weight, Tensor *out,
