@@ -58,11 +58,12 @@ class Conv2DImpl : public OperatorNodeBase {
                        sizeof(float) * ho * wo);
             }
         }
-        Tensor transpose_inp({mFlattenInp.shape()[1], mFlattenInp.shape()[0]});
-        Transpose(mFlattenInp, &transpose_inp);
+        
         if(mDeviceType == DeviceType::GPU){
-            cuda::CudaMat(transpose_diff, transpose_inp, grad_w);
+            
         }else{
+            Tensor transpose_inp({mFlattenInp.shape()[1], mFlattenInp.shape()[0]});
+            Transpose(mFlattenInp, &transpose_inp);
             Mat(transpose_diff, transpose_inp, grad_w);
         }
 

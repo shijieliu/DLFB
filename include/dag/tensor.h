@@ -13,6 +13,7 @@
 #include <iostream>
 #include <memory>
 #include <vector>
+#include <omp.h>
 
 namespace dl {
 using Shape = std::vector<int>;
@@ -315,7 +316,7 @@ inline void Conv2D(const Tensor &x, const Tensor &weight, Tensor *out, Tensor *f
     
     // build flatten_x
     {
-
+#pragma openmp parallel for collapse(6) 
         for (int n_step = 0; n_step < n; ++n_step) {
             for (int c_step = 0; c_step < c_in; ++c_step) {
                 for (int h_step = 0; h_step < h_out; ++h_step) {
