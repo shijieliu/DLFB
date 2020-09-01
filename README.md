@@ -1,6 +1,6 @@
 ![](./DLFB.png)
 # DLFB(a Deep Learning Framework for Beginners)
-DLFB is a lightweighted/scalable deep learning framework for deep learning beginners. It provides a user-friendly interface and basic deep learning compnents such as conv/fc/activation/dropout/pooling etc, where you can easily build/train/eval your own deep learning model. To accelerate the train/test process, this framework also uses low-level acceleration technology including avx/sse/cuda and support multi-mechine interactive training.
+DLFB is a lightweighted/scalable deep learning framework for deep learning beginners. It provides a user-friendly interface and basic deep learning compnents such as conv/fc/activation/dropout/pooling etc, where you can easily build/train/eval your own deep learning model. To accelerate the train/test process, this framework also uses low-level acceleration technology including avx/sse/cuda and support multi-mechine distributed training.
 
 # DLFB(a Deep Learning Framework for Beginners)
 DLFB 是一个面向深度学习初学者的轻量级/可扩展的深度学习框架，旨在为深度学习初学者提供一个可以用来学习/实操的框架。整体框架包括了从底层算子加速(avx/sse/cuda)，到深度学习整体计算图的构建/运行/自动求导，到可扩展的多机分布式优化。目前整体框架在快速迭代中，欢迎关注和贡献代码！
