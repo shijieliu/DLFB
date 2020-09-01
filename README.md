@@ -1,7 +1,7 @@
 ![](./DLFB.png)
 
 # DLFB(a Deep Learning Framework for Beginners)
-DLFB 是一个面向深度学习初学者的轻量级/可扩展的深度学习框架，旨在为深度学习初学者提供一个可以用来学习/实操的框架。整体框架包括了从底层算子加速(avx/sse/cuda)，到深度学习整体计算图的构建/运行/自动求导，到可扩展的多机分布式优化。目前整体框架在快速迭代中，欢迎关注和贡献代码！
+DLFB(a Deep Learning Framework for Beginners) 是一个面向深度学习初学者的轻量级/可扩展的深度学习框架，旨在为深度学习初学者提供一个可以用来学习/实操的框架。整体框架包括了从底层算子加速(avx/sse/cuda)，到深度学习整体计算图的构建/运行/自动求导，到可扩展的多机分布式优化。目前整体框架在快速迭代中，欢迎关注和贡献代码！
 # Pros
 目前使用 cpp 实现的深度学习框架，包括 [tiny-dnn](https://github.com/tiny-dnn/tiny-dnn)，相比之下，DLFB 有如下特点：
 1. 易于学习理解。整体 api 设计仿照 pytorch，学习成本低；无第三方依赖，配合相关例程，代码可读性高；
